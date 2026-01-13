@@ -1,0 +1,51 @@
+<svg width="400" height="533" viewBox="0 0 400 533" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect width="400" height="533" fill="#0f1419"/>
+
+  <!-- Gradient overlay -->
+  <defs>
+    <linearGradient id="grad2" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#1a2530;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#0f1419;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  <rect width="400" height="533" fill="url(#grad2)"/>
+
+  <!-- Sport watch illustration -->
+  <rect x="155" y="240" width="90" height="90" rx="20" fill="#D4AF37" opacity="0.2"/>
+  <rect x="165" y="250" width="70" height="70" rx="15" fill="#1a1a1a" stroke="#D4AF37" stroke-width="3"/>
+
+  <!-- Digital display -->
+  <rect x="175" y="265" width="50" height="25" rx="3" fill="#0a0a0a"/>
+  <text x="200" y="282" font-family="monospace" font-size="12" fill="#D4AF37" text-anchor="middle">12:45</text>
+
+  <!-- Sport indicators -->
+  <circle cx="185" cy="305" r="3" fill="#ff4444" opacity="0.7"/>
+  <circle cx="200" cy="305" r="3" fill="#44ff44" opacity="0.7"/>
+  <circle cx="215" cy="305" r="3" fill="#4444ff" opacity="0.7"/>
+
+  <!-- Wrist band (sport style) -->
+  <rect x="150" y="275" width="15" height="40" rx="3" fill="#2a2a2a"/>
+  <rect x="235" y="275" width="15" height="40" rx="3" fill="#2a2a2a"/>
+
+  <!-- Band texture -->
+  <line x1="150" y1="280" x2="165" y2="280" stroke="#3a3a3a" stroke-width="1"/>
+  <line x1="150" y1="290" x2="165" y2="290" stroke="#3a3a3a" stroke-width="1"/>
+  <line x1="150" y1="300" x2="165" y2="300" stroke="#3a3a3a" stroke-width="1"/>
+  <line x1="235" y1="280" x2="250" y2="280" stroke="#3a3a3a" stroke-width="1"/>
+  <line x1="235" y1="290" x2="250" y2="290" stroke="#3a3a3a" stroke-width="1"/>
+  <line x1="235" y1="300" x2="250" y2="300" stroke="#3a3a3a" stroke-width="1"/>
+
+  <!-- Athletic elements -->
+  <path d="M 100 400 Q 200 350 300 400" stroke="#D4AF37" stroke-width="2" fill="none" opacity="0.3"/>
+  <circle cx="120" cy="380" r="4" fill="#D4AF37" opacity="0.4"/>
+  <circle cx="280" cy="380" r="4" fill="#D4AF37" opacity="0.4"/>
+
+  <!-- Text overlay -->
+  <text x="200" y="470" font-family="Arial, sans-serif" font-size="14" fill="#D4AF37" text-anchor="middle" opacity="0.6">
+    Sport &amp; Performance
+  </text>
+  <text x="200" y="490" font-family="Arial, sans-serif" font-size="11" fill="#999" text-anchor="middle">
+    Collection Sportive
+  </text>
+</svg>

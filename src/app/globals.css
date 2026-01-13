@@ -1,0 +1,114 @@
+@import url("https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Cormorant+Garamond:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap");
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Orange Avenue Demo - Police personnalisée pour le logo */
+@font-face {
+  font-family: "Orange Avenue DEMO";
+  src: url("/fonts/OrangeAvenueDemo.otf") format("opentype");
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+@layer base {
+  body {
+    @apply bg-white text-neutral-900 font-sans antialiased;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    @apply font-display;
+  }
+}
+
+@layer components {
+  .container-luxury {
+    @apply container mx-auto px-6 max-w-7xl;
+  }
+
+  .text-balance {
+    text-wrap: balance;
+  }
+}
+
+@layer utilities {
+  .animation-delay-200 {
+    animation-delay: 200ms;
+  }
+
+  .animation-delay-400 {
+    animation-delay: 400ms;
+  }
+
+  .animation-delay-600 {
+    animation-delay: 600ms;
+  }
+}
+
+/* Smooth scrolling */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 10px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-neutral-100;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-neutral-400 rounded-full;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-neutral-600;
+}
+
+/* Selection */
+::selection {
+  @apply bg-accent-gold text-black;
+}
+
+/* Focus visible */
+*:focus-visible {
+  @apply outline-none ring-2 ring-accent-gold ring-offset-2;
+}
+
+/* Phone Input Styles */
+.phone-input-custom {
+  @apply relative flex items-center border border-neutral-300 rounded-lg overflow-hidden transition-all;
+}
+
+.phone-input-custom:focus-within {
+  @apply border-black ring-2 ring-black ring-opacity-10;
+}
+
+.phone-input-custom .PhoneInputCountry {
+  @apply flex items-center px-3 py-3 bg-neutral-50 border-r border-neutral-200;
+}
+
+.phone-input-custom .PhoneInputCountrySelect {
+  @apply appearance-none bg-transparent focus:outline-none cursor-pointer pr-1;
+}
+
+.phone-input-custom .PhoneInputCountryIcon {
+  @apply w-6 h-6 mr-2;
+}
+
+.phone-input-custom .PhoneInputCountrySelectArrow {
+  @apply ml-1 text-neutral-500;
+}
+
+.phone-input-custom .PhoneInputInput {
+  @apply flex-1 px-4 py-3 border-0 focus:outline-none focus:ring-0 bg-white;
+}

@@ -1,0 +1,322 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// ============ CORE ENTITIES ============
+
+model Brand {
+  id          String    @id @default(cuid())
+  name        String    @unique
+  slug        String    @unique
+  description String?
+  logoUrl     String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  products    Product[]
+
+  @@index([slug])
+}
+
+model Collection {
+  id          String    @id @default(cuid())
+  name        String    @unique
+  slug        String    @unique
+  description String?
+  imageUrl    String?
+  featured    Boolean   @default(false)
+  order       Int       @default(0)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  products    Product[]
+
+  @@index([slug])
+  @@index([featured])
+}
+
+model Product {
+  id              String    @id @default(cuid())
+  slug            String    @unique
+  name            String
+  description     String    @db.Text
+
+  // Pricing
+  price           Int       // in FCFA (no decimals for FCFA)
+  currency        String    @default("FCFA")
+  compareAtPrice  Int?      // For showing discounts
+
+  // Stock Management
+  stockQuantity   Int       @default(0)
+  lowStockThreshold Int     @default(5)
+  trackInventory  Boolean   @default(true)
+  allowBackorder  Boolean   @default(false)
+
+  // Product Details
+  color           String?
+  sku             String?   @unique
+
+  // Relations
+  brandId         String
+  brand           Brand     @relation(fields: [brandId], references: [id], onDelete: Cascade)
+  collectionId    String
+  collection      Collection @relation(fields: [collectionId], references: [id], onDelete: Cascade)
+
+  // Images (stored as JSON)
+  mainImage       String
+  galleryImages   String[]  @default([])
+  lifestyleImages String[]  @default([])
+
+  // Specifications (stored as JSON)
+  specifications  Json?     // { movement, case, diameter, waterResistance, strap, features }
+
+  // SEO & Status
+  featured        Boolean   @default(false)
+  published       Boolean   @default(true)
+  model3d         String?
+
+  // Timestamps
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  publishedAt     DateTime?
+
+  // Relations
+  orderItems        OrderItem[]
+  stockMovements    StockMovement[]
+  stockReservations StockReservation[]
+
+  @@index([slug])
+  @@index([brandId])
+  @@index([collectionId])
+  @@index([featured])
+  @@index([published])
+  @@index([stockQuantity])
+}
+
+// ============ STOCK MANAGEMENT ============
+
+enum StockMovementType {
+  ENTRY         // Entrée de stock (achat, réception)
+  EXIT          // Sortie de stock (vente, commande)
+  ADJUSTMENT    // Ajustement manuel (correction, inventaire)
+  RETURN        // Retour client
+}
+
+model StockMovement {
+  id          String            @id @default(cuid())
+
+  // Product reference
+  productId   String
+  product     Product           @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  // Movement details
+  type        StockMovementType
+  quantity    Int               // Positive for entry, negative for exit
+
+  // Stock before and after
+  previousStock Int
+  newStock      Int
+
+  // Context
+  reason      String?           @db.Text
+  reference   String?           // Order number, invoice number, etc.
+  orderId     String?           // If related to an order
+
+  // Who made the change
+  userId      String?
+  userName    String?
+
+  // Timestamps
+  createdAt   DateTime          @default(now())
+
+  @@index([productId])
+  @@index([type])
+  @@index([createdAt])
+  @@index([orderId])
+}
+
+// ============ TESTIMONIALS ============
+
+enum TestimonialType {
+  TEXT
+  PHOTO
+  VIDEO
+  CONVERSATION
+}
+
+enum Platform {
+  WHATSAPP
+  INSTAGRAM
+  EMAIL
+}
+
+model Testimonial {
+  id                  String          @id @default(cuid())
+  type                TestimonialType
+  customerName        String
+  date                DateTime
+  rating              Int?            // 1-5 stars
+
+  // Content
+  text                String?         @db.Text
+  collection          String?
+
+  // Media
+  imageUrl            String?
+  videoUrl            String?
+  thumbnailUrl        String?
+  conversationImageUrl String?
+  platform            Platform?
+
+  // Metadata
+  verified            Boolean         @default(false)
+  featured            Boolean         @default(false)
+  published           Boolean         @default(true)
+
+  // Timestamps
+  createdAt           DateTime        @default(now())
+  updatedAt           DateTime        @updatedAt
+
+  @@index([type])
+  @@index([featured])
+  @@index([published])
+  @@index([date])
+}
+
+// ============ ORDERS ============
+
+enum OrderStatus {
+  PENDING           // Order received via WhatsApp
+  CONFIRMED         // Admin confirmed
+  PROCESSING        // Being prepared
+  SHIPPED           // Out for delivery
+  DELIVERED         // Completed
+  CANCELLED         // Cancelled
+  REFUNDED          // Refunded
+}
+
+model Order {
+  id                String      @id @default(cuid())
+  orderNumber       String      @unique // LUX-2024-0001 format
+
+  // Customer Information
+  customerName      String
+  customerPhone     String
+  customerEmail     String?
+
+  // Delivery Information
+  deliveryMessage   String?     @db.Text
+  recipientFirstName String?
+  recipientLastName  String?
+  recipientPhone    String?
+
+  // Order Details
+  status            OrderStatus @default(PENDING)
+  subtotal          Int         // in FCFA
+  deliveryFee       Int         @default(0)
+  total             Int
+  currency          String      @default("FCFA")
+
+  // Internal Notes
+  adminNotes        String?     @db.Text
+
+  // Timestamps
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
+  confirmedAt       DateTime?
+  deliveredAt       DateTime?
+
+  // Relations
+  items             OrderItem[]
+  statusHistory     OrderStatusHistory[]
+
+  @@index([orderNumber])
+  @@index([status])
+  @@index([customerPhone])
+  @@index([createdAt])
+}
+
+model OrderItem {
+  id              String   @id @default(cuid())
+  orderId         String
+  order           Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  productId       String
+  product         Product  @relation(fields: [productId], references: [id], onDelete: Restrict)
+
+  // Snapshot at time of order (prices may change)
+  productName     String
+  productColor    String?
+  productImage    String
+  priceAtOrder    Int      // Price when ordered
+  quantity        Int
+  subtotal        Int      // priceAtOrder * quantity
+
+  createdAt       DateTime @default(now())
+
+  @@index([orderId])
+  @@index([productId])
+}
+
+model OrderStatusHistory {
+  id        String      @id @default(cuid())
+  orderId   String
+  order     Order       @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  status    OrderStatus
+  notes     String?     @db.Text
+  changedBy String?     // Admin user ID
+
+  createdAt DateTime    @default(now())
+
+  @@index([orderId])
+  @@index([createdAt])
+}
+
+// ============ STOCK RESERVATION ============
+
+model StockReservation {
+  id          String   @id @default(cuid())
+  productId   String
+  product     Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  sessionId   String   // Unique session ID for anonymous users
+  quantity    Int      // Number of units reserved
+
+  expiresAt   DateTime // When the reservation expires (30 minutes from creation)
+  createdAt   DateTime @default(now())
+
+  @@index([productId])
+  @@index([sessionId])
+  @@index([expiresAt]) // For cleanup queries
+}
+
+// ============ AUTHENTICATION ============
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  password      String    // Hashed with bcrypt
+  name          String
+  role          UserRole  @default(ADMIN)
+
+  active        Boolean   @default(true)
+
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  lastLoginAt   DateTime?
+
+  @@index([email])
+  @@index([role])
+}
+
+enum UserRole {
+  ADMIN
+  SUPER_ADMIN
+}
