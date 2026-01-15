@@ -6,11 +6,12 @@ import { prisma } from '@/lib/prisma'
 // GET /api/collections/[id] - Get single collection
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params
     const collection = await prisma.collection.findUnique({
-      where: { id: params.id },
+      where: { id },
       include: {
         products: {
           include: {
@@ -43,9 +44,10 @@ export async function GET(
 // PUT /api/collections/[id] - Update collection (Admin only)
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params
     const session = await getServerSession(authOptions)
 
     if (!session) {
@@ -55,7 +57,7 @@ export async function PUT(
     const body = await request.json()
 
     const collection = await prisma.collection.update({
-      where: { id: params.id },
+      where: { id },
       data: {
         name: body.name,
         description: body.description,
@@ -77,9 +79,10 @@ export async function PUT(
 // DELETE /api/collections/[id] - Delete collection and all its products (Admin only)
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params
     const session = await getServerSession(authOptions)
 
     if (!session) {
@@ -89,7 +92,7 @@ export async function DELETE(
     // Delete collection and all related products in transaction
     // Cascade delete is handled by Prisma schema (onDelete: Cascade)
     await prisma.collection.delete({
-      where: { id: params.id },
+      where: { id },
     })
 
     return NextResponse.json({ success: true })

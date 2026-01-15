@@ -6,9 +6,10 @@ import { prisma } from '@/lib/prisma'
 // PATCH /api/products/stock/[id] - Update stock quantity
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params
     const session = await getServerSession(authOptions)
 
     if (!session) {
@@ -25,7 +26,7 @@ export async function PATCH(
     }
 
     const product = await prisma.product.update({
-      where: { slug: params.id },
+      where: { slug: id },
       data: { stockQuantity },
     })
 
