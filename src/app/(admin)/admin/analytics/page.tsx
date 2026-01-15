@@ -312,9 +312,10 @@ export default function AnalyticsPage() {
                       border: '1px solid #e5e7eb',
                       borderRadius: '8px',
                     }}
-                    formatter={(value: number, name: string) => {
+                    formatter={(value, name) => {
+                      if (value === undefined) return ['', '']
                       if (name === 'revenue') {
-                        return [`${value.toLocaleString('fr-FR')} FCFA`, 'Revenus']
+                        return [`${Number(value).toLocaleString('fr-FR')} FCFA`, 'Revenus']
                       }
                       return [value, 'Commandes']
                     }}
