@@ -175,7 +175,7 @@ export default function CatalogContent() {
               className="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:outline-none focus:border-black"
             >
               <option value="all">Toutes les collections</option>
-              {collections.map((collection) => (
+              {collections.map((collection: string) => (
                 <option key={collection} value={collection}>
                   {collection}
                 </option>
