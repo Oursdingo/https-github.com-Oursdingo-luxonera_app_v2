@@ -402,7 +402,7 @@ export default function OrderDetailPage() {
               <div className="px-6 py-4 border-b border-amber-200 flex items-center gap-2">
                 <Gift className="w-5 h-5 text-amber-600" />
                 <h2 className="text-lg font-display font-semibold text-amber-900">
-                  C'est un cadeau
+                  C&apos;est un cadeau
                 </h2>
               </div>
               <div className="p-6 space-y-3">
@@ -457,7 +457,7 @@ export default function OrderDetailPage() {
           <div className="bg-white rounded-lg shadow-xl max-w-md w-full">
             <div className="px-6 py-4 border-b border-neutral-200">
               <h3 className="text-lg font-semibold text-neutral-900">
-                Changer le statut en "{getStatusLabel(selectedStatus)}"
+                Changer le statut en &quot;{getStatusLabel(selectedStatus)}&quot;
               </h3>
             </div>
             <div className="p-6 space-y-4">

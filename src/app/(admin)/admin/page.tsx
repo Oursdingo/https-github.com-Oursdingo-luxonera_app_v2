@@ -155,7 +155,7 @@ export default function AdminDashboard() {
           Tableau de bord
         </h1>
         <p className="text-neutral-600 mt-2">
-          Vue d'ensemble de votre boutique Luxonera
+          Vue d&apos;ensemble de votre boutique Luxonera
         </p>
       </div>
 
@@ -265,7 +265,7 @@ export default function AdminDashboard() {
               <p className="text-red-700 mt-1">
                 {stats.lowStockProducts} produit{stats.lowStockProducts > 1 ? 's' : ''}{' '}
                 {stats.lowStockProducts > 1 ? 'ont' : 'a'} un stock inférieur au seuil
-                d'alerte.
+                d&apos;alerte.
               </p>
               <Link
                 href="/admin/products"

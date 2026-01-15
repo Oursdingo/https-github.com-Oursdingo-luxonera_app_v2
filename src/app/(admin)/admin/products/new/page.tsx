@@ -361,7 +361,7 @@ export default function NewProductPage() {
                   onChange={(e) => handleInputChange('trackInventory', e.target.checked)}
                   className="w-4 h-4 text-accent-gold focus:ring-accent-gold rounded"
                 />
-                <span className="text-sm text-neutral-700">Suivre l'inventaire</span>
+                <span className="text-sm text-neutral-700">Suivre l&apos;inventaire</span>
               </label>
 
               <label className="flex items-center gap-2 cursor-pointer">

@@ -360,7 +360,7 @@ export default function EditProductPage({ params }: { params: Promise<{ slug: st
                       onChange={(e) => handleInputChange('trackInventory', e.target.checked)}
                       className="w-4 h-4"
                     />
-                    <span className="text-sm">Suivre l'inventaire</span>
+                    <span className="text-sm">Suivre l&apos;inventaire</span>
                   </label>
                 </div>
               </div>

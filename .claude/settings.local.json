@@ -25,7 +25,8 @@
       "Bash(netstat:*)",
       "Bash(taskkill:*)",
       "Bash(dir:*)",
-      "Bash(ls:*)"
+      "Bash(ls:*)",
+      "mcp__ide__getDiagnostics"
     ],
     "deny": [],
     "ask": []
