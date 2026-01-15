@@ -29,15 +29,19 @@ export default function WatchDetails({ watch }: WatchDetailsProps) {
       id: watch.id,
       slug: watch.slug,
       name: watch.name,
+      brand: watch.brand?.name || '',
       price: watch.price,
+      currency: 'FCFA',
       images: {
         main: watch.mainImage,
         gallery: watch.galleryImages || [],
       },
+      description: watch.description || '',
       collection: watch.collection?.name || '',
       color: watch.color || '',
       inStock: isInStock,
       stockQuantity: watch.stockQuantity,
+      featured: watch.featured || false,
     })
   }
 
