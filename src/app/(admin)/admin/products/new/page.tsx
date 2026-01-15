@@ -36,7 +36,7 @@ export default function NewProductPage() {
     featured: false,
     published: true,
     mainImage: '',
-    galleryImages: [],
+    galleryImages: [] as string[],
     specifications: {
       movement: '',
       case: '',
