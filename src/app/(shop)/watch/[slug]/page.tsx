@@ -2,8 +2,8 @@ import { notFound } from 'next/navigation'
 import ProductCard from '@/components/product/ProductCard'
 import WatchDetails from '@/components/product/WatchDetails'
 
-// Enable ISR - revalidate every 60 seconds
-export const revalidate = 60
+// Force dynamic rendering to fetch fresh stock data
+export const dynamic = 'force-dynamic'
 
 interface PageProps {
   params: Promise<{ slug: string }>
