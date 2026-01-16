@@ -22,7 +22,7 @@ async function getFeaturedProducts() {
     const products = data.products || []
 
     // Map API data to expected Watch structure
-    return products.map((product: any) => ({
+    const mappedProducts = products.map((product: any) => ({
       id: product.id,
       name: product.name,
       slug: product.slug,
@@ -40,6 +40,9 @@ async function getFeaturedProducts() {
       },
       specifications: product.specifications,
     }))
+
+    // Trier par ordre alphabétique (par nom de collection)
+    return mappedProducts.sort((a: any, b: any) => a.collection.localeCompare(b.collection))
   } catch (error) {
     console.error('Error fetching featured products:', error)
     return []

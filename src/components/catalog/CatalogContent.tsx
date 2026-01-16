@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo, useEffect } from 'react'
+import { useState, useMemo, useEffect, useRef } from 'react'
 import { useSearchParams, useRouter, usePathname } from 'next/navigation'
 import ProductGrid from '@/components/product/ProductGrid'
 import { SortOption } from '@/types/product'
@@ -15,7 +15,7 @@ export default function CatalogContent() {
   const collectionFromUrl = searchParams.get('collection')
 
   const [selectedCollection, setSelectedCollection] = useState<string>('all')
-  const [sortBy, setSortBy] = useState<SortOption>('newest')
+  const [sortBy, setSortBy] = useState<SortOption>('name')
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 5000000])
 
   // Fetch products from API
@@ -49,13 +49,16 @@ export default function CatalogContent() {
 
   const collections = collectionsData?.collections?.map((c: any) => c.name) || []
 
-  // Pré-sélectionner la collection depuis l'URL (une seule fois au montage)
+  // Ref pour tracker si le filtre URL a déjà été appliqué
+  const hasAppliedUrlFilter = useRef(false)
+
+  // Pré-sélectionner la collection depuis l'URL (quand les collections sont chargées)
   useEffect(() => {
-    if (collectionFromUrl && collections.includes(collectionFromUrl)) {
+    if (!hasAppliedUrlFilter.current && collectionFromUrl && collections.length > 0 && collections.includes(collectionFromUrl)) {
       setSelectedCollection(collectionFromUrl)
+      hasAppliedUrlFilter.current = true
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  }, [collectionFromUrl, collections])
 
   // Gérer le changement de collection avec mise à jour de l'URL
   const handleCollectionChange = (collection: string) => {
