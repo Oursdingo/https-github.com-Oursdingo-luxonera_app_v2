@@ -26,22 +26,9 @@ const nextConfig = {
         source: "/:path*",
         headers: [
           {
-            key: "Content-Type",
-            value: "text/html; charset=utf-8",
-          },
-          {
             // Permet les liens externes (WhatsApp, etc.)
             key: "Referrer-Policy",
             value: "strict-origin-when-cross-origin",
-          },
-        ],
-      },
-      {
-        source: "/_next/static/:path*",
-        headers: [
-          {
-            key: "Content-Type",
-            value: "application/javascript; charset=utf-8",
           },
         ],
       },
