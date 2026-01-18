@@ -21,9 +21,19 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'No file provided' }, { status: 400 })
     }
 
-    // Validate file type
+    // Validate file type (some browsers report empty or generic types)
     const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/avif']
-    if (!validTypes.includes(file.type)) {
+    const blockedTypes = ['image/heic', 'image/heif']
+    const extension = file.name.split('.').pop()?.toLowerCase() || ''
+    const validExtensions = ['jpg', 'jpeg', 'png', 'webp', 'avif']
+    const blockedExtensions = ['heic', 'heif']
+    if (blockedTypes.includes(file.type) || blockedExtensions.includes(extension)) {
+      return NextResponse.json(
+        { error: 'Format HEIC/HEIF non supporte. Exportez en JPG ou PNG.' },
+        { status: 400 }
+      )
+    }
+    if (!validTypes.includes(file.type) && !validExtensions.includes(extension)) {
       return NextResponse.json(
         { error: 'Type de fichier invalide. Utilisez JPG, PNG, WEBP ou AVIF.' },
         { status: 400 }
@@ -42,8 +52,17 @@ export async function POST(request: NextRequest) {
     // Create unique filename
     const timestamp = Date.now()
     const randomString = Math.random().toString(36).substring(2, 8)
-    const extension = file.name.split('.').pop()
-    const filename = `${timestamp}-${randomString}.${extension}`
+    const typeToExtension: Record<string, string> = {
+      'image/jpeg': 'jpg',
+      'image/jpg': 'jpg',
+      'image/png': 'png',
+      'image/webp': 'webp',
+      'image/avif': 'avif',
+    }
+    const safeExtension = validExtensions.includes(extension)
+      ? extension
+      : (typeToExtension[file.type] || 'jpg')
+    const filename = `${timestamp}-${randomString}.${safeExtension}`
 
     // Ensure upload directory exists
     const uploadDir = path.join(process.cwd(), 'public', 'uploads')

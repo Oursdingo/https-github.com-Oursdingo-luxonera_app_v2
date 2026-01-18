@@ -67,9 +67,18 @@ export default function ImageUpload({
     setIsUploading(true)
     setProgress(0)
 
-    // Validate file type
+    // Validate file type (some browsers report empty or generic types)
     const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/avif']
-    if (!validTypes.includes(file.type)) {
+    const blockedTypes = ['image/heic', 'image/heif']
+    const extension = file.name.split('.').pop()?.toLowerCase() || ''
+    const validExtensions = ['jpg', 'jpeg', 'png', 'webp', 'avif']
+    const blockedExtensions = ['heic', 'heif']
+    if (blockedTypes.includes(file.type) || blockedExtensions.includes(extension)) {
+      setError('Format HEIC/HEIF non supporte. Exportez en JPG ou PNG.')
+      setIsUploading(false)
+      return
+    }
+    if (!validTypes.includes(file.type) && !validExtensions.includes(extension)) {
       setError('Type de fichier invalide. Utilisez JPG, PNG, WEBP ou AVIF.')
       setIsUploading(false)
       return
@@ -169,7 +178,7 @@ export default function ImageUpload({
           <input
             ref={fileInputRef}
             type="file"
-            accept="image/jpeg,image/jpg,image/png,image/webp,image/avif"
+            accept="image/jpeg,image/jpg,image/png,image/webp,image/avif,.jpg,.jpeg,.png,.webp,.avif,.heic,.heif"
             onChange={handleFileSelect}
             className="hidden"
             disabled={isUploading}

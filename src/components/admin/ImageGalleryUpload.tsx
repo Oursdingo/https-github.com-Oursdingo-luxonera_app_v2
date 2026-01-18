@@ -80,9 +80,17 @@ export default function ImageGalleryUpload({
       for (let i = 0; i < filesToUpload.length; i++) {
         const file = filesToUpload[i]
 
-        // Validate file type
+        // Validate file type (some browsers report empty or generic types)
         const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/avif']
-        if (!validTypes.includes(file.type)) {
+        const blockedTypes = ['image/heic', 'image/heif']
+        const extension = file.name.split('.').pop()?.toLowerCase() || ''
+        const validExtensions = ['jpg', 'jpeg', 'png', 'webp', 'avif']
+        const blockedExtensions = ['heic', 'heif']
+        if (blockedTypes.includes(file.type) || blockedExtensions.includes(extension)) {
+          setError(`${file.name}: Format HEIC/HEIF non supporte. Exportez en JPG ou PNG.`)
+          continue
+        }
+        if (!validTypes.includes(file.type) && !validExtensions.includes(extension)) {
           setError(`${file.name}: Type de fichier invalide`)
           continue
         }
@@ -196,7 +204,7 @@ export default function ImageGalleryUpload({
             <input
               ref={fileInputRef}
               type="file"
-              accept="image/jpeg,image/jpg,image/png,image/webp,image/avif"
+              accept="image/jpeg,image/jpg,image/png,image/webp,image/avif,.jpg,.jpeg,.png,.webp,.avif,.heic,.heif"
               onChange={handleFileSelect}
               className="hidden"
               disabled={isUploading}
