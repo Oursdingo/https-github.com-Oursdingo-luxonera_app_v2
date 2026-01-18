@@ -48,9 +48,19 @@ export default function NewProductPage() {
   })
 
   const brands = brandsData?.brands || []
-  const collections = collectionsData?.collections || []
+  const allCollections = collectionsData?.collections || []
+
+  // Filtrer les collections selon la marque selectionnee
+  const filteredCollections = formData.brandId
+    ? allCollections.filter((c: any) => c.brandId === formData.brandId)
+    : []
 
   const handleInputChange = (field: string, value: any) => {
+    // Si la marque change, reinitialiser la collection
+    if (field === 'brandId') {
+      setFormData(prev => ({ ...prev, brandId: value, collectionId: '' }))
+      return
+    }
     setFormData(prev => ({ ...prev, [field]: value }))
   }
 
@@ -275,14 +285,26 @@ export default function NewProductPage() {
                   onChange={(e) => handleInputChange('collectionId', e.target.value)}
                   className="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent-gold"
                   required
+                  disabled={!formData.brandId}
                 >
-                  <option value="">Sélectionner une collection</option>
-                  {collections.map((collection: any) => (
+                  <option value="">
+                    {!formData.brandId
+                      ? 'Selectionnez d\'abord une marque'
+                      : filteredCollections.length === 0
+                      ? 'Aucune collection pour cette marque'
+                      : 'Selectionner une collection'}
+                  </option>
+                  {filteredCollections.map((collection: any) => (
                     <option key={collection.id} value={collection.id}>
                       {collection.name}
                     </option>
                   ))}
                 </select>
+                {formData.brandId && filteredCollections.length === 0 && (
+                  <p className="text-xs text-amber-600 mt-1">
+                    Cette marque n&apos;a pas encore de collection. Creez-en une dans l&apos;onglet &quot;Collections&quot;.
+                  </p>
+                )}
               </div>
             </div>
 

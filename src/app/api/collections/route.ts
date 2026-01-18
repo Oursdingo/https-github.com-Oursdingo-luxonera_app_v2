@@ -8,12 +8,21 @@ export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url)
     const includeProducts = searchParams.get('includeProducts') === 'true'
+    const brandId = searchParams.get('brandId')
 
     const collections = await prisma.collection.findMany({
+      where: brandId ? { brandId } : undefined,
       orderBy: {
         order: 'asc',
       },
       include: {
+        brand: {
+          select: {
+            id: true,
+            name: true,
+            slug: true,
+          },
+        },
         _count: {
           select: { products: true },
         },
@@ -57,9 +66,9 @@ export async function POST(request: NextRequest) {
     const { collection: collectionData, featuredProduct, watches } = body
 
     // Validation
-    if (!collectionData.name || !featuredProduct || !watches || watches.length === 0) {
+    if (!collectionData.name || !collectionData.brandId || !featuredProduct || !watches || watches.length === 0) {
       return NextResponse.json(
-        { error: 'Collection name, featured product, and at least one watch are required' },
+        { error: 'Collection name, brand, featured product, and at least one watch are required' },
         { status: 400 }
       )
     }
@@ -78,6 +87,7 @@ export async function POST(request: NextRequest) {
             .replace(/(^-|-$)/g, ''),
           description: collectionData.description || null,
           featured: collectionData.featured || false,
+          brandId: collectionData.brandId,
           order: 0,
         },
       })

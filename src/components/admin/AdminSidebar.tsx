@@ -9,11 +9,13 @@ import {
   ShoppingCart,
   BarChart3,
   X,
-  Layers
+  Layers,
+  Tag
 } from 'lucide-react'
 
 const navItems = [
   { href: '/admin', label: 'Tableau de bord', icon: LayoutDashboard },
+  { href: '/admin/brands', label: 'Marques', icon: Tag },
   { href: '/admin/collections', label: 'Collections', icon: Layers },
   { href: '/admin/products', label: 'Produits', icon: Package },
   { href: '/admin/orders', label: 'Commandes', icon: ShoppingCart },

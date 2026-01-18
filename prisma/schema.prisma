@@ -20,6 +20,7 @@ model Brand {
   updatedAt   DateTime  @updatedAt
 
   products    Product[]
+  collections Collection[]
 
   @@index([slug])
 }
@@ -35,10 +36,15 @@ model Collection {
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
 
+  // Relation avec la marque
+  brandId     String
+  brand       Brand     @relation(fields: [brandId], references: [id], onDelete: Cascade)
+
   products    Product[]
 
   @@index([slug])
   @@index([featured])
+  @@index([brandId])
 }
 
 model Product {

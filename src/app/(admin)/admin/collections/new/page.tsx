@@ -25,13 +25,13 @@ export default function NewCollectionPage() {
     name: '',
     description: '',
     featured: false,
+    brandId: '',
   })
 
   // Featured product (image de la collection)
   const [featuredProduct, setFeaturedProduct] = useState({
     name: '',
-    description: 'Image représentative de la collection',
-    brandId: '',
+    description: 'Image representative de la collection',
     mainImage: '',
     galleryImages: [] as string[],
   })
@@ -43,7 +43,6 @@ export default function NewCollectionPage() {
       name: '',
       description: '',
       price: '',
-      brandId: '',
       color: '',
       mainImage: '',
       galleryImages: [] as string[],
@@ -58,7 +57,6 @@ export default function NewCollectionPage() {
         name: '',
         description: '',
         price: '',
-        brandId: '',
         color: '',
         mainImage: '',
         galleryImages: [] as string[],
@@ -92,19 +90,19 @@ export default function NewCollectionPage() {
     e.preventDefault()
 
     // Validation
-    if (!collectionData.name) {
-      toast.error('Erreur', { description: 'Le nom de la collection est obligatoire' })
+    if (!collectionData.name || !collectionData.brandId) {
+      toast.error('Erreur', { description: 'Le nom et la marque de la collection sont obligatoires' })
       return
     }
 
-    if (!featuredProduct.name || !featuredProduct.brandId || !featuredProduct.mainImage) {
-      toast.error('Erreur', { description: 'Veuillez compléter l\'image de la collection' })
+    if (!featuredProduct.name || !featuredProduct.mainImage) {
+      toast.error('Erreur', { description: 'Veuillez completer l\'image de la collection' })
       return
     }
 
-    const incompleteWatch = watches.find(w => !w.name || !w.description || !w.price || !w.brandId || !w.mainImage)
+    const incompleteWatch = watches.find(w => !w.name || !w.description || !w.price || !w.mainImage)
     if (incompleteWatch) {
-      toast.error('Erreur', { description: 'Veuillez compléter toutes les montres' })
+      toast.error('Erreur', { description: 'Veuillez completer toutes les montres' })
       return
     }
 
@@ -118,11 +116,13 @@ export default function NewCollectionPage() {
           collection: collectionData,
           featuredProduct: {
             ...featuredProduct,
+            brandId: collectionData.brandId,
             featured: true,
             published: collectionData.featured,
           },
           watches: watches.map(w => ({
             ...w,
+            brandId: collectionData.brandId,
             price: parseInt(w.price),
             featured: false,
             published: true,
@@ -203,6 +203,28 @@ export default function NewCollectionPage() {
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-neutral-700 mb-2">
+                  Marque <span className="text-red-600">*</span>
+                </label>
+                <select
+                  value={collectionData.brandId}
+                  onChange={(e) => setCollectionData({ ...collectionData, brandId: e.target.value })}
+                  className="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent-gold"
+                  required
+                >
+                  <option value="">Selectionner une marque</option>
+                  {brands.map((brand: any) => (
+                    <option key={brand.id} value={brand.id}>
+                      {brand.name}
+                    </option>
+                  ))}
+                </select>
+                <p className="text-xs text-neutral-500 mt-1">
+                  Vous devez d&apos;abord creer une marque dans l&apos;onglet &quot;Marques&quot; si elle n&apos;existe pas
+                </p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-neutral-700 mb-2">
                   Nom de la collection <span className="text-red-600">*</span>
                 </label>
                 <input
@@ -210,7 +232,7 @@ export default function NewCollectionPage() {
                   value={collectionData.name}
                   onChange={(e) => setCollectionData({ ...collectionData, name: e.target.value })}
                   className="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent-gold"
-                  placeholder="Montres de Luxe"
+                  placeholder="Casio Classic, Curren Skeleton..."
                   required
                 />
               </div>
@@ -243,7 +265,7 @@ export default function NewCollectionPage() {
               <button
                 type="button"
                 onClick={() => setCurrentStep(2)}
-                disabled={!collectionData.name}
+                disabled={!collectionData.name || !collectionData.brandId}
                 className="px-6 py-3 bg-accent-gold text-black font-medium rounded-lg hover:bg-accent-gold/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
               >
                 Suivant
@@ -278,25 +300,6 @@ export default function NewCollectionPage() {
                 />
               </div>
 
-              <div>
-                <label className="block text-sm font-medium text-neutral-700 mb-2">
-                  Marque <span className="text-red-600">*</span>
-                </label>
-                <select
-                  value={featuredProduct.brandId}
-                  onChange={(e) => setFeaturedProduct({ ...featuredProduct, brandId: e.target.value })}
-                  className="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent-gold"
-                  required
-                >
-                  <option value="">Sélectionner une marque</option>
-                  {brands.map((brand: any) => (
-                    <option key={brand.id} value={brand.id}>
-                      {brand.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
               <ImageUpload
                 value={featuredProduct.mainImage}
                 onChange={(url) => setFeaturedProduct({ ...featuredProduct, mainImage: url })}
@@ -323,7 +326,7 @@ export default function NewCollectionPage() {
               <button
                 type="button"
                 onClick={() => setCurrentStep(3)}
-                disabled={!featuredProduct.name || !featuredProduct.brandId || !featuredProduct.mainImage}
+                disabled={!featuredProduct.name || !featuredProduct.mainImage}
                 className="px-6 py-3 bg-accent-gold text-black font-medium rounded-lg hover:bg-accent-gold/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
               >
                 Suivant
@@ -402,7 +405,7 @@ export default function NewCollectionPage() {
                     />
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-sm font-medium text-neutral-700 mb-2">
                         Prix (FCFA) <span className="text-red-600">*</span>
@@ -415,25 +418,6 @@ export default function NewCollectionPage() {
                         placeholder="5000000"
                         required
                       />
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-neutral-700 mb-2">
-                        Marque <span className="text-red-600">*</span>
-                      </label>
-                      <select
-                        value={watch.brandId}
-                        onChange={(e) => updateWatch(watch.id, 'brandId', e.target.value)}
-                        className="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent-gold"
-                        required
-                      >
-                        <option value="">Sélectionner</option>
-                        {brands.map((brand: any) => (
-                          <option key={brand.id} value={brand.id}>
-                            {brand.name}
-                          </option>
-                        ))}
-                      </select>
                     </div>
 
                     <div>
