@@ -5,7 +5,12 @@ import { Toaster } from "sonner";
 export const metadata: Metadata = {
   title: "Luxonera - L'Excellence Horlogère",
   icons: {
-    icon: "/images/logo/logo.ico",
+    icon: [
+      { url: "/favicon.ico", sizes: "any" },
+      { url: "/images/logo/logo.ico", sizes: "any" },
+    ],
+    apple: "/images/logo/logo.png",
+    shortcut: "/favicon.ico",
   },
 
   description:
