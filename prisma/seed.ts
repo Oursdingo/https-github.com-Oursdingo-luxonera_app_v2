@@ -44,22 +44,39 @@ async function main() {
   }
   console.log(`✅ Created ${uniqueBrands.length} brands`)
 
-  // 4. Create Collections
+  // 4. Create Collections (associate each collection with a brand based on product data)
+  // First, build a mapping of collection -> brand from the watches data
+  const collectionToBrand = new Map<string, string>()
+  for (const watch of watches) {
+    if (!collectionToBrand.has(watch.collection)) {
+      collectionToBrand.set(watch.collection, watch.brand)
+    }
+  }
+
   const collectionMap = new Map<string, string>() // name -> id
   for (const [index, collectionName] of uniqueCollections.entries()) {
+    const brandName = collectionToBrand.get(collectionName)
+    const brandId = brandName ? brandMap.get(brandName) : null
+
+    if (!brandId) {
+      console.warn(`⚠️ Skipping collection ${collectionName}: no brand found`)
+      continue
+    }
+
     const collection = await prisma.collection.upsert({
       where: { name: collectionName },
-      update: {},
+      update: { brandId },
       create: {
         name: collectionName,
         slug: collectionName.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, ''),
         featured: index < 4, // First 4 collections are featured
         order: index,
+        brandId,
       },
     })
     collectionMap.set(collectionName, collection.id)
   }
-  console.log(`✅ Created ${uniqueCollections.length} collections`)
+  console.log(`✅ Created ${collectionMap.size} collections`)
 
   // 5. Migrate Products
   console.log('Migrating products...')

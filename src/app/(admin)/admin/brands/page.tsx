@@ -6,6 +6,7 @@ import Image from 'next/image'
 import { Plus, Search, Edit, Trash2, Tag, Save, X, Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
 import ImageUpload from '@/components/admin/ImageUpload'
+import ConfirmModal from '@/components/admin/ConfirmModal'
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json())
 
@@ -26,6 +27,11 @@ export default function BrandsPage() {
   const [isCreating, setIsCreating] = useState(false)
   const [editingBrand, setEditingBrand] = useState<Brand | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
+
+  // Delete modal state
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
+  const [brandToDelete, setBrandToDelete] = useState<Brand | null>(null)
+  const [isDeleting, setIsDeleting] = useState(false)
 
   // Form state
   const [formData, setFormData] = useState({
@@ -98,13 +104,23 @@ export default function BrandsPage() {
     }
   }
 
-  const handleDelete = async (brandId: string, brandName: string) => {
-    if (!confirm(`Etes-vous sur de vouloir supprimer la marque "${brandName}" ? Toutes les collections et produits associes seront egalement supprimes.`)) {
-      return
-    }
+  const openDeleteModal = (brand: Brand) => {
+    setBrandToDelete(brand)
+    setIsDeleteModalOpen(true)
+  }
+
+  const closeDeleteModal = () => {
+    setIsDeleteModalOpen(false)
+    setBrandToDelete(null)
+  }
+
+  const handleDelete = async () => {
+    if (!brandToDelete) return
+
+    setIsDeleting(true)
 
     try {
-      const response = await fetch(`/api/brands/${brandId}`, {
+      const response = await fetch(`/api/brands/${brandToDelete.id}`, {
         method: 'DELETE',
       })
 
@@ -114,14 +130,17 @@ export default function BrandsPage() {
       }
 
       toast.success('Marque supprimee', {
-        description: `${brandName} et ses donnees associees ont ete supprimes`
+        description: `${brandToDelete.name} et ses donnees associees ont ete supprimes`
       })
 
+      closeDeleteModal()
       mutate()
     } catch (error: any) {
       toast.error('Erreur', {
         description: error.message || 'Impossible de supprimer la marque'
       })
+    } finally {
+      setIsDeleting(false)
     }
   }
 
@@ -302,7 +321,7 @@ export default function BrandsPage() {
                   Modifier
                 </button>
                 <button
-                  onClick={() => handleDelete(brand.id, brand.name)}
+                  onClick={() => openDeleteModal(brand)}
                   className="px-3 py-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition-colors flex items-center justify-center"
                 >
                   <Trash2 className="w-4 h-4" />
@@ -336,6 +355,18 @@ export default function BrandsPage() {
           )}
         </div>
       )}
+
+      {/* Delete Confirmation Modal */}
+      <ConfirmModal
+        isOpen={isDeleteModalOpen}
+        onClose={closeDeleteModal}
+        onConfirm={handleDelete}
+        title="Supprimer la marque"
+        message={`Etes-vous sur de vouloir supprimer la marque "${brandToDelete?.name}" ? Toutes les collections et produits associes seront egalement supprimes.`}
+        confirmText="Supprimer"
+        variant="danger"
+        isLoading={isDeleting}
+      />
     </div>
   )
 }

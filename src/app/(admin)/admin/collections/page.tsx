@@ -6,11 +6,26 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { Plus, Search, Edit, Trash2, Package, Eye, EyeOff } from 'lucide-react'
 import { toast } from 'sonner'
+import ConfirmModal from '@/components/admin/ConfirmModal'
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json())
 
+interface Collection {
+  id: string
+  name: string
+  description: string | null
+  featured: boolean
+  products?: any[]
+  _count?: { products: number }
+}
+
 export default function CollectionsPage() {
   const [searchQuery, setSearchQuery] = useState('')
+
+  // Delete modal state
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
+  const [collectionToDelete, setCollectionToDelete] = useState<Collection | null>(null)
+  const [isDeleting, setIsDeleting] = useState(false)
 
   const { data, error, isLoading, mutate } = useSWR('/api/collections?includeProducts=true', fetcher)
 
@@ -20,13 +35,23 @@ export default function CollectionsPage() {
     collection.name.toLowerCase().includes(searchQuery.toLowerCase())
   )
 
-  const handleDelete = async (collectionId: string, collectionName: string) => {
-    if (!confirm(`Êtes-vous sûr de vouloir supprimer la collection "${collectionName}" et tous ses produits ?`)) {
-      return
-    }
+  const openDeleteModal = (collection: Collection) => {
+    setCollectionToDelete(collection)
+    setIsDeleteModalOpen(true)
+  }
+
+  const closeDeleteModal = () => {
+    setIsDeleteModalOpen(false)
+    setCollectionToDelete(null)
+  }
+
+  const handleDelete = async () => {
+    if (!collectionToDelete) return
+
+    setIsDeleting(true)
 
     try {
-      const response = await fetch(`/api/collections/${collectionId}`, {
+      const response = await fetch(`/api/collections/${collectionToDelete.id}`, {
         method: 'DELETE',
       })
 
@@ -35,15 +60,18 @@ export default function CollectionsPage() {
         throw new Error(data.error || 'Erreur lors de la suppression')
       }
 
-      toast.success('Collection supprimée', {
-        description: `${collectionName} et tous ses produits ont été supprimés`
+      toast.success('Collection supprimee', {
+        description: `${collectionToDelete.name} et tous ses produits ont ete supprimes`
       })
 
+      closeDeleteModal()
       mutate()
     } catch (error: any) {
       toast.error('Erreur', {
         description: error.message || 'Impossible de supprimer la collection'
       })
+    } finally {
+      setIsDeleting(false)
     }
   }
 
@@ -156,7 +184,7 @@ export default function CollectionsPage() {
                     Modifier
                   </Link>
                   <button
-                    onClick={() => handleDelete(collection.id, collection.name)}
+                    onClick={() => openDeleteModal(collection)}
                     className="px-3 py-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition-colors flex items-center justify-center"
                   >
                     <Trash2 className="w-4 h-4" />
@@ -191,6 +219,18 @@ export default function CollectionsPage() {
           )}
         </div>
       )}
+
+      {/* Delete Confirmation Modal */}
+      <ConfirmModal
+        isOpen={isDeleteModalOpen}
+        onClose={closeDeleteModal}
+        onConfirm={handleDelete}
+        title="Supprimer la collection"
+        message={`Etes-vous sur de vouloir supprimer la collection "${collectionToDelete?.name}" ? Tous les produits associes seront egalement supprimes.`}
+        confirmText="Supprimer"
+        variant="danger"
+        isLoading={isDeleting}
+      />
     </div>
   )
 }
