@@ -14,6 +14,7 @@ import {
   TrendingDown,
 } from 'lucide-react'
 import { toast } from 'sonner'
+import ConfirmModal from '@/components/admin/ConfirmModal'
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json())
 
@@ -49,35 +50,52 @@ export default function ProductsPage() {
   const [searchTerm, setSearchTerm] = useState('')
   const [filterStatus, setFilterStatus] = useState<'all' | 'published' | 'draft'>('all')
 
+  // Delete modal state
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
+  const [productToDelete, setProductToDelete] = useState<Product | null>(null)
+  const [isDeleting, setIsDeleting] = useState(false)
+
   const { data, error, isLoading } = useSWR<{ products: Product[]; count: number }>(
     '/api/products',
     fetcher
   )
 
-  const handleDelete = async (productId: string, productName: string) => {
-    if (!confirm(`Êtes-vous sûr de vouloir supprimer "${productName}" ?`)) {
-      return
-    }
+  const openDeleteModal = (product: Product) => {
+    setProductToDelete(product)
+    setIsDeleteModalOpen(true)
+  }
+
+  const closeDeleteModal = () => {
+    setIsDeleteModalOpen(false)
+    setProductToDelete(null)
+  }
+
+  const handleDelete = async () => {
+    if (!productToDelete) return
+
+    setIsDeleting(true)
 
     try {
-      const response = await fetch(`/api/products/${productId}`, {
+      const response = await fetch(`/api/products/${productToDelete.id}`, {
         method: 'DELETE',
       })
 
       if (!response.ok) {
-        throw new Error('Échec de la suppression')
+        throw new Error('Echec de la suppression')
       }
 
-      toast.success('Produit supprimé', {
-        description: `${productName} a été supprimé avec succès.`,
+      toast.success('Produit supprime', {
+        description: `${productToDelete.name} a ete supprime avec succes.`,
       })
 
-      // Revalidate the products list
+      closeDeleteModal()
       mutate('/api/products')
     } catch (error) {
       toast.error('Erreur', {
         description: 'Impossible de supprimer le produit.',
       })
+    } finally {
+      setIsDeleting(false)
     }
   }
 
@@ -323,7 +341,7 @@ export default function ProductsPage() {
                           <Edit className="w-4 h-4" />
                         </Link>
                         <button
-                          onClick={() => handleDelete(product.id, product.name)}
+                          onClick={() => openDeleteModal(product)}
                           className="p-2 text-neutral-600 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
                           title="Supprimer"
                         >
@@ -417,7 +435,7 @@ export default function ProductsPage() {
                   Modifier
                 </Link>
                 <button
-                  onClick={() => handleDelete(product.id, product.name)}
+                  onClick={() => openDeleteModal(product)}
                   className="flex items-center gap-2 px-3 py-2 text-sm text-red-600 hover:bg-red-50 rounded-lg transition-colors"
                 >
                   <Trash2 className="w-4 h-4" />
@@ -438,6 +456,18 @@ export default function ProductsPage() {
           {data && filteredProducts.length !== data.count && ` sur ${data.count} au total`}
         </div>
       )}
+
+      {/* Delete Confirmation Modal */}
+      <ConfirmModal
+        isOpen={isDeleteModalOpen}
+        onClose={closeDeleteModal}
+        onConfirm={handleDelete}
+        title="Supprimer le produit"
+        message={`Etes-vous sur de vouloir supprimer le produit "${productToDelete?.name}" ? Cette action est irreversible.`}
+        confirmText="Supprimer"
+        variant="danger"
+        isLoading={isDeleting}
+      />
     </div>
   )
 }
