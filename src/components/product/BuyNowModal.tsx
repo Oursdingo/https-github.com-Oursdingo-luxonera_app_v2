@@ -41,6 +41,9 @@ export default function BuyNowModal({ watch, isOpen, onClose }: BuyNowModalProps
 
   const placeholderImage =
     'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="800" height="800"%3E%3Crect fill="%23f5f5f5" width="800" height="800"/%3E%3Ctext fill="%23999" font-family="serif" font-size="48" x="50%25" y="50%25" text-anchor="middle" dominant-baseline="middle"%3ELuxonera%3C/text%3E%3C/svg%3E'
+  const shouldBypassOptimization = (url: string) =>
+    url.startsWith('/uploads/') || url.startsWith('data:')
+  const summaryImage = watch.mainImage || placeholderImage
 
   const validateName = (name: string) => {
     const nameRegex = /^[a-zA-ZÀ-ÿ\s'-]+$/
@@ -235,10 +238,11 @@ export default function BuyNowModal({ watch, isOpen, onClose }: BuyNowModalProps
           <div className="flex gap-4 p-4 bg-neutral-50 rounded-lg">
             <div className="relative w-20 h-20 flex-shrink-0 rounded-lg overflow-hidden bg-white">
               <Image
-                src={watch.mainImage || placeholderImage}
+                src={summaryImage}
                 alt={watch.name}
                 fill
                 className="object-contain p-1"
+                unoptimized={shouldBypassOptimization(summaryImage)}
               />
             </div>
             <div className="flex-1 min-w-0">

@@ -12,6 +12,9 @@ interface CartItemProps {
 
 export default function CartItem({ item }: CartItemProps) {
   const { updateQuantity, removeItem, refreshReservations } = useCartStore()
+  const shouldBypassOptimization = (url: string) =>
+    url.startsWith('/uploads/') || url.startsWith('data:')
+  const imageUrl = item.images.main || '/images/placeholder.jpg'
 
   const handleQuantityChange = async (newQuantity: number) => {
     if (newQuantity < 1) {
@@ -32,10 +35,11 @@ export default function CartItem({ item }: CartItemProps) {
         {/* Image */}
         <div className="relative w-20 h-20 sm:w-24 sm:h-24 flex-shrink-0 bg-neutral-50 rounded-lg overflow-hidden">
           <Image
-            src={item.images.main || '/images/placeholder.jpg'}
+            src={imageUrl}
             alt={item.name}
             fill
             className="object-cover"
+            unoptimized={shouldBypassOptimization(imageUrl)}
           />
         </div>
 

@@ -47,6 +47,8 @@ export default function ProductCard({
       : "https://images.unsplash.com/photo-1523170335258-f5ed11844a49?w=800&q=80";
 
   const hoverImage = watch.images?.gallery?.[0] || mainImage;
+  const shouldBypassOptimization = (url: string) =>
+    url.startsWith("/uploads/") || url.startsWith("data:");
 
   // URL de redirection selon le mode
   const linkHref =
@@ -77,6 +79,7 @@ export default function ProductCard({
               fill
               className="object-cover transition-transform duration-700 group-hover:scale-105"
               sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+              unoptimized={shouldBypassOptimization(mainImage)}
               onError={() => setImageError(true)}
             />
           </div>
@@ -93,6 +96,7 @@ export default function ProductCard({
               fill
               className="object-cover transition-transform duration-700 group-hover:scale-105"
               sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+              unoptimized={shouldBypassOptimization(hoverImage)}
             />
           </div>
 

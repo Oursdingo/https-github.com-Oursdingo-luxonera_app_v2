@@ -23,6 +23,13 @@ export default function WatchDetails({ watch }: WatchDetailsProps) {
 
   const placeholderImage =
     'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="800" height="800"%3E%3Crect fill="%23f5f5f5" width="800" height="800"/%3E%3Ctext fill="%23999" font-family="serif" font-size="48" x="50%25" y="50%25" text-anchor="middle" dominant-baseline="middle"%3ELuxonera%3C/text%3E%3C/svg%3E'
+  const shouldBypassOptimization = (url: string) =>
+    url.startsWith('/uploads/') || url.startsWith('data:')
+
+  const selectedImageUrl =
+    !imageError && allImages[selectedImage]
+      ? allImages[selectedImage]
+      : placeholderImage
 
   const handleAddToCart = async () => {
     await addItem({
@@ -72,15 +79,12 @@ export default function WatchDetails({ watch }: WatchDetailsProps) {
         {/* Main Image */}
         <div className="relative w-full h-[600px] mb-4 bg-neutral-50 rounded-lg overflow-hidden">
           <Image
-            src={
-              !imageError && allImages[selectedImage]
-                ? allImages[selectedImage]
-                : placeholderImage
-            }
+            src={selectedImageUrl}
             alt={watch.name}
             fill
             className="object-contain p-4"
             priority
+            unoptimized={shouldBypassOptimization(selectedImageUrl)}
             onError={() => setImageError(true)}
           />
         </div>
@@ -105,6 +109,7 @@ export default function WatchDetails({ watch }: WatchDetailsProps) {
                 alt={`${watch.name} - ${index + 1}`}
                 fill
                 className="object-cover"
+                unoptimized={shouldBypassOptimization(img || placeholderImage)}
               />
             </button>
           ))}
