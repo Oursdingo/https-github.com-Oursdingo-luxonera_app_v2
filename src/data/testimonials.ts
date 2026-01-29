@@ -14,17 +14,6 @@ export const testimonials: Testimonial[] = [
     verified: true
   },
 
-  // Conversation WhatsApp
-  {
-    id: '3',
-    type: 'conversation',
-    customerName: 'Marc Laurent',
-    date: '2024-12-05',
-    conversationImageUrl: '/testimonials/conversations/conversation-1.jpeg',
-    platform: 'whatsapp',
-    featured: false
-  },
-
   // Photo client
   {
     id: '6',
@@ -37,16 +26,6 @@ export const testimonials: Testimonial[] = [
     collection: 'Sport & Performance'
   },
 
-  // Conversation WhatsApp
-  {
-    id: '7',
-    type: 'conversation',
-    customerName: 'Laura Moreau',
-    date: '2024-11-20',
-    conversationImageUrl: '/testimonials/conversations/conversation-2.jpeg',
-    platform: 'whatsapp'
-  },
-
   // Photo client
   {
     id: '9',
@@ -57,56 +36,6 @@ export const testimonials: Testimonial[] = [
     imageUrl: '/testimonials/photos/customer-photo-3.svg',
     text: "Obsédée par ma nouvelle montre Or & Prestige 😍 Elle va avec absolument toutes mes tenues !",
     collection: 'Or & Prestige'
-  },
-
-  // Conversation WhatsApp
-  {
-    id: '10',
-    type: 'conversation',
-    customerName: 'Pierre Garnier',
-    date: '2024-11-10',
-    conversationImageUrl: '/testimonials/conversations/conversation-3.jpeg',
-    platform: 'whatsapp'
-  },
-
-  // Conversation WhatsApp
-  {
-    id: '13',
-    type: 'conversation',
-    customerName: 'Sarah Konaté',
-    date: '2024-12-20',
-    conversationImageUrl: '/testimonials/conversations/conversation-4.jpeg',
-    platform: 'whatsapp'
-  },
-
-  // Conversation WhatsApp
-  {
-    id: '14',
-    type: 'conversation',
-    customerName: 'Ibrahim Traoré',
-    date: '2024-12-18',
-    conversationImageUrl: '/testimonials/conversations/conversation-5.jpeg',
-    platform: 'whatsapp'
-  },
-
-  // Conversation WhatsApp
-  {
-    id: '15',
-    type: 'conversation',
-    customerName: 'Aminata Ouédraogo',
-    date: '2024-12-15',
-    conversationImageUrl: '/testimonials/conversations/conversation-6.jpeg',
-    platform: 'whatsapp'
-  },
-
-  // Conversation WhatsApp
-  {
-    id: '16',
-    type: 'conversation',
-    customerName: 'Boubacar Sawadogo',
-    date: '2024-12-12',
-    conversationImageUrl: '/testimonials/conversations/conversation-7.jpeg',
-    platform: 'whatsapp'
   }
 ];
 
