@@ -102,28 +102,37 @@ export default function ProductCard({
 
           {/* Badges */}
           <div className="absolute top-4 left-4 flex flex-col gap-2">
+            {/* Badge "Collection" - seulement en mode collection */}
             {mode === "collection" && watch.featured && (
               <span className="bg-accent-gold text-black text-xs font-semibold px-3 py-1 rounded-full shadow">
                 Collection
               </span>
             )}
-            {mode === "product" && watch.featured && (
+
+            {/* Badge "Nouveauté" - seulement en mode product et si < 2 jours */}
+            {mode === "product" && !watch.featured && watch.createdAt &&
+              (new Date().getTime() - new Date(watch.createdAt).getTime()) < 2 * 24 * 60 * 60 * 1000 && (
               <span className="bg-accent-gold text-black text-xs font-semibold px-3 py-1 rounded-full shadow">
                 Nouveauté
               </span>
             )}
 
-            {/* Stock Status Badges */}
-            {!watch.inStock ? (
-              <span className="bg-red-600 text-white text-xs font-semibold px-3 py-1 rounded-full shadow">
-                Rupture de stock
-              </span>
-            ) : watch.stockQuantity && watch.stockQuantity <= 5 ? (
-              <span className="bg-orange-500 text-white text-xs font-semibold px-3 py-1 rounded-full shadow animate-pulse">
-                {watch.stockQuantity} restant{watch.stockQuantity > 1 ? 's' : ''}
-              </span>
-            ) : null}
+            {/* Stock Status Badges - seulement en mode product et pas pour les featured */}
+            {mode === "product" && !watch.featured && (
+              <>
+                {!watch.inStock ? (
+                  <span className="bg-red-600 text-white text-xs font-semibold px-3 py-1 rounded-full shadow">
+                    Rupture de stock
+                  </span>
+                ) : watch.stockQuantity && watch.stockQuantity <= 5 ? (
+                  <span className="bg-orange-500 text-white text-xs font-semibold px-3 py-1 rounded-full shadow animate-pulse">
+                    {watch.stockQuantity} restant{watch.stockQuantity > 1 ? 's' : ''}
+                  </span>
+                ) : null}
+              </>
+            )}
 
+            {/* Badge couleur - seulement en mode product */}
             {mode === "product" && watch.color && watch.color !== "Main" && (
               <span className="bg-neutral-100 text-neutral-800 text-xs font-medium px-3 py-1 rounded-full shadow">
                 {watch.color}

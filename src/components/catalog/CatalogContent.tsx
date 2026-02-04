@@ -24,10 +24,20 @@ export default function CatalogContent() {
   // Fetch collections from API
   const { data: collectionsData, error: collectionsError } = useSWR('/api/collections', fetcher)
 
-  // Map API data to expected Watch structure
+  // Map API data to expected Watch structure (avec déduplication par nom)
   const watches = useMemo(() => {
     const products = productsData?.products || []
-    return products.map((product: any) => ({
+    const seenNames = new Set<string>()
+    return products
+      .filter((product: any) => {
+        const normalizedName = product.name?.toLowerCase().trim()
+        if (seenNames.has(normalizedName)) {
+          return false
+        }
+        seenNames.add(normalizedName)
+        return true
+      })
+      .map((product: any) => ({
       id: product.id,
       name: product.name,
       slug: product.slug,
@@ -44,6 +54,7 @@ export default function CatalogContent() {
         lifestyle: product.lifestyleImages || [],
       },
       specifications: product.specifications,
+      createdAt: product.createdAt,
     }))
   }, [productsData])
 
@@ -79,8 +90,8 @@ export default function CatalogContent() {
   const filteredAndSortedWatches = useMemo(() => {
     let filtered = [...watches]
 
-    // Exclure les images "Main" (collections) du catalogue
-    filtered = filtered.filter((watch: any) => watch.color !== "Main")
+    // Exclure les images de collection (produits featured)
+    filtered = filtered.filter((watch: any) => !watch.featured)
 
     // Filter by collection
     if (selectedCollection !== 'all') {
@@ -92,19 +103,34 @@ export default function CatalogContent() {
       (watch: any) => watch.price >= priceRange[0] && watch.price <= priceRange[1]
     )
 
-    // Sort
+    // Sort avec tri secondaire par stock (ruptures en bas)
     switch (sortBy) {
       case 'price-asc':
-        filtered.sort((a: any, b: any) => a.price - b.price)
+        filtered.sort((a: any, b: any) => {
+          if (a.inStock !== b.inStock) return a.inStock ? -1 : 1
+          return a.price - b.price
+        })
         break
       case 'price-desc':
-        filtered.sort((a: any, b: any) => b.price - a.price)
+        filtered.sort((a: any, b: any) => {
+          if (a.inStock !== b.inStock) return a.inStock ? -1 : 1
+          return b.price - a.price
+        })
         break
       case 'name':
-        filtered.sort((a: any, b: any) => a.name.localeCompare(b.name))
+        filtered.sort((a: any, b: any) => {
+          if (a.inStock !== b.inStock) return a.inStock ? -1 : 1
+          return a.name.localeCompare(b.name)
+        })
         break
       case 'newest':
-        filtered.sort((a: any, b: any) => (b.featured ? 1 : 0) - (a.featured ? 1 : 0))
+        filtered.sort((a: any, b: any) => {
+          if (a.inStock !== b.inStock) return a.inStock ? -1 : 1
+          // Tri par date de création (plus récent en premier)
+          const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0
+          const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0
+          return dateB - dateA
+        })
         break
     }
 
