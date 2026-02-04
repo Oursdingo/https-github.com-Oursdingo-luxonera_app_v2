@@ -24,17 +24,17 @@ export default function CatalogContent() {
   // Fetch collections from API
   const { data: collectionsData, error: collectionsError } = useSWR('/api/collections', fetcher)
 
-  // Map API data to expected Watch structure (avec déduplication par nom)
+  // Map API data to expected Watch structure (avec déduplication par nom + collection)
   const watches = useMemo(() => {
     const products = productsData?.products || []
-    const seenNames = new Set<string>()
+    const seenKeys = new Set<string>()
     return products
       .filter((product: any) => {
-        const normalizedName = product.name?.toLowerCase().trim()
-        if (seenNames.has(normalizedName)) {
+        const key = `${product.name?.toLowerCase().trim()}_${product.collection?.name?.toLowerCase().trim() || ''}`
+        if (seenKeys.has(key)) {
           return false
         }
-        seenNames.add(normalizedName)
+        seenKeys.add(key)
         return true
       })
       .map((product: any) => ({
