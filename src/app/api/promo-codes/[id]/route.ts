@@ -75,12 +75,12 @@ export async function PUT(
     const promoCodeSchema = z.object({
       code: z.string().min(3).max(20).transform(val => val.toUpperCase().replace(/\s/g, '')).optional(),
       description: z.string().optional().nullable(),
-      discountPercent: z.number().int().min(1).max(100).optional(),
+      discountPercent: z.coerce.number().int().min(1).max(100).optional(),
       startsAt: z.string().optional(),
       expiresAt: z.string().optional().nullable(),
-      maxUses: z.number().int().positive().optional().nullable(),
+      maxUses: z.coerce.number().int().positive().optional().nullable(),
       onePerCustomer: z.boolean().optional(),
-      minOrderAmount: z.number().int().positive().optional().nullable(),
+      minOrderAmount: z.coerce.number().int().positive().optional().nullable(),
       active: z.boolean().optional(),
     })
 
