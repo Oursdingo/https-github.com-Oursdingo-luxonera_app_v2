@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { z } from 'zod'
+import { sendOrderNotification } from '@/lib/push'
 
 // GET /api/orders - Admin only
 export async function GET(request: NextRequest) {
@@ -205,6 +206,16 @@ export async function POST(request: NextRequest) {
         },
       })
     }
+
+    // Send push notification to admins (non-blocking)
+    sendOrderNotification({
+      orderNumber: order.orderNumber,
+      customerName: validatedData.customerName,
+      total: order.total,
+      itemCount: order.items.length,
+    }).catch((err) => {
+      console.error('Failed to send order notification:', err)
+    })
 
     return NextResponse.json({ order }, { status: 201 })
   } catch (error) {

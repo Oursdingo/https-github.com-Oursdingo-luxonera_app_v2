@@ -12,7 +12,12 @@ export const metadata: Metadata = {
     apple: "/images/logo/logo.png",
     shortcut: "/favicon.ico",
   },
-
+  manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "Luxonera",
+  },
   description:
     "Découvrez notre collection exclusive de montres de luxe. Artisanat suisse, design intemporel et précision exceptionnelle.",
   keywords: ["montres de luxe", "horlogerie", "montres suisses", "Luxonera"],

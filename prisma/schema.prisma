@@ -387,3 +387,30 @@ model PromoCodeUsage {
   @@index([customerPhone])
   @@index([orderId])
 }
+
+// ============ PUSH NOTIFICATIONS ============
+
+model PushSubscription {
+  id              String    @id @default(cuid())
+
+  // Web Push subscription data
+  endpoint        String    @unique
+  p256dh          String    // Public key
+  auth            String    // Auth secret
+
+  // User association (optional, for admin notifications)
+  userId          String?
+
+  // Device info
+  userAgent       String?
+
+  // Status
+  active          Boolean   @default(true)
+
+  // Timestamps
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@index([userId])
+  @@index([active])
+}

@@ -2,6 +2,8 @@
 
 import { signOut } from 'next-auth/react'
 import { LogOut, Menu } from 'lucide-react'
+import NotificationBell from './NotificationBell'
+import PushNotificationToggle from './PushNotificationToggle'
 
 interface AdminHeaderProps {
   user: {
@@ -33,7 +35,13 @@ export default function AdminHeader({ user, onMenuClick }: AdminHeaderProps) {
       </div>
 
       {/* User actions */}
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-2 sm:gap-4">
+        {/* Push Notifications Toggle */}
+        <PushNotificationToggle />
+
+        {/* In-app Notifications */}
+        <NotificationBell />
+
         <div className="hidden sm:block text-right">
           <p className="text-sm font-medium text-neutral-900">{user.name}</p>
           <p className="text-xs text-neutral-500">{user.email}</p>
@@ -41,7 +49,7 @@ export default function AdminHeader({ user, onMenuClick }: AdminHeaderProps) {
 
         <button
           onClick={handleSignOut}
-          className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-lg transition-colors shadow-sm"
+          className="flex items-center gap-2 px-3 sm:px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-lg transition-colors shadow-sm"
         >
           <LogOut className="w-4 h-4" />
           <span className="hidden sm:inline">Déconnexion</span>
