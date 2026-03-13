@@ -553,12 +553,12 @@ export default function WhatsAppCheckout() {
               placeholder="Entrez votre code"
               value={promoCode}
               onChange={(e) => setPromoCode(e.target.value.toUpperCase())}
-              className="flex-1 px-4 py-2.5 border border-neutral-300 rounded-lg focus:outline-none focus:border-black transition-colors uppercase font-mono"
+              className="flex-1 min-w-0 px-4 py-2.5 border border-neutral-300 rounded-lg focus:outline-none focus:border-black transition-colors uppercase font-mono"
             />
             <button
               onClick={validatePromoCode}
               disabled={isValidatingPromo || !promoCode.trim()}
-              className="px-4 py-2.5 bg-black text-white rounded-lg font-medium hover:bg-neutral-800 disabled:bg-neutral-300 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
+              className="flex-shrink-0 px-4 py-2.5 bg-[#25D366] text-white rounded-lg font-medium hover:bg-[#128C7E] disabled:bg-neutral-300 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
             >
               {isValidatingPromo ? (
                 <Loader2 className="w-4 h-4 animate-spin" />
