@@ -25,6 +25,7 @@ export interface CheckoutData {
     collection?: string
   }>
   total: number
+  subtotal?: number
   customerName?: string
   customerPhone?: string
   orderNumber?: string
@@ -33,5 +34,10 @@ export interface CheckoutData {
     firstName: string
     lastName: string
     phone: string
+  }
+  promoCode?: {
+    code: string
+    discountPercent: number
+    discountAmount: number
   }
 }

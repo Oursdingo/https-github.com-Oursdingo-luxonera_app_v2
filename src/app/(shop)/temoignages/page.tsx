@@ -1,19 +1,57 @@
 "use client";
 
-import { useEffect, useRef } from 'react';
-import { testimonials } from '@/data/testimonials';
+import { useEffect, useRef, useState } from 'react';
 import TestimonialCard from '@/components/testimonials/TestimonialCard';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
-import { Star, Quote } from 'lucide-react';
+import { Star, Quote, Loader2 } from 'lucide-react';
+import { Testimonial } from '@/types/testimonial';
 
 gsap.registerPlugin(ScrollTrigger);
 
 export default function TestimonialsPage() {
   const cardsRef = useRef<HTMLDivElement>(null);
   const heroRef = useRef<HTMLDivElement>(null);
+  const [testimonials, setTestimonials] = useState<Testimonial[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    // Fetch testimonials from API
+    const fetchTestimonials = async () => {
+      try {
+        const res = await fetch('/api/testimonials');
+        const data = await res.json();
+        // Transform API data to match frontend type
+        const transformed = data.testimonials.map((t: any) => ({
+          id: t.id,
+          type: t.type.toLowerCase() as Testimonial['type'],
+          customerName: t.customerName,
+          date: t.date,
+          rating: t.rating,
+          text: t.text,
+          collection: t.collection,
+          imageUrl: t.imageUrl,
+          videoUrl: t.videoUrl,
+          thumbnailUrl: t.thumbnailUrl,
+          conversationImageUrl: t.conversationImageUrl,
+          platform: t.platform?.toLowerCase() as Testimonial['platform'],
+          verified: t.verified,
+          featured: t.featured,
+        }));
+        setTestimonials(transformed);
+      } catch (error) {
+        console.error('Failed to fetch testimonials:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchTestimonials();
+  }, []);
+
+  useEffect(() => {
+    if (isLoading) return;
+
     // Animation du hero
     if (heroRef.current) {
       gsap.from(heroRef.current.querySelectorAll('.hero-animate'), {
@@ -42,7 +80,7 @@ export default function TestimonialsPage() {
         ease: 'power3.out'
       });
     }
-  }, []);
+  }, [isLoading]);
 
   return (
     <main className="min-h-screen">
@@ -103,7 +141,16 @@ export default function TestimonialsPage() {
       {/* Testimonials Grid - Masonry Style */}
       <section className="py-12 sm:py-20 md:py-32 bg-gradient-to-b from-white to-neutral-50">
         <div className="container-luxury">
-          {/* Grid avec effet Masonry */}
+          {isLoading ? (
+            <div className="flex items-center justify-center py-20">
+              <Loader2 className="w-12 h-12 text-accent-gold animate-spin" />
+            </div>
+          ) : testimonials.length === 0 ? (
+            <div className="text-center py-20">
+              <p className="text-neutral-600 text-lg">Aucun temoignage pour le moment</p>
+            </div>
+          ) : (
+          /* Grid avec effet Masonry */
           <div
             ref={cardsRef}
             className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 md:gap-8 auto-rows-auto"
@@ -135,6 +182,7 @@ export default function TestimonialsPage() {
               );
             })}
           </div>
+          )}
 
           {/* CTA Section */}
           <div className="mt-12 sm:mt-16 md:mt-20 text-center">

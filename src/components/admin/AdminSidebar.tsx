@@ -10,7 +10,9 @@ import {
   BarChart3,
   X,
   Layers,
-  Tag
+  Tag,
+  MessageCircle,
+  Ticket
 } from 'lucide-react'
 
 const navItems = [
@@ -19,6 +21,8 @@ const navItems = [
   { href: '/admin/collections', label: 'Collections', icon: Layers },
   { href: '/admin/products', label: 'Produits', icon: Package },
   { href: '/admin/orders', label: 'Commandes', icon: ShoppingCart },
+  { href: '/admin/promo-codes', label: 'Codes Promo', icon: Ticket },
+  { href: '/admin/testimonials', label: 'Temoignages', icon: MessageCircle },
   { href: '/admin/analytics', label: 'Analytiques', icon: BarChart3 },
 ]
 

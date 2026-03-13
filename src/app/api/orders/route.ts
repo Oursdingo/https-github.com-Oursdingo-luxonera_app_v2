@@ -79,6 +79,8 @@ export async function POST(request: NextRequest) {
       recipientFirstName: z.string().optional(),
       recipientLastName: z.string().optional(),
       recipientPhone: z.string().optional(),
+      promoCode: z.string().optional(),
+      promoDiscount: z.number().int().optional(),
     })
 
     const validatedData = orderSchema.parse(body)
@@ -130,6 +132,10 @@ export async function POST(request: NextRequest) {
       subtotal += itemSubtotal
     }
 
+    // Calculate final total with promo discount
+    const promoDiscount = validatedData.promoDiscount || 0
+    const total = subtotal - promoDiscount
+
     const order = await prisma.order.create({
       data: {
         orderNumber,
@@ -141,7 +147,9 @@ export async function POST(request: NextRequest) {
         recipientLastName: validatedData.recipientLastName,
         recipientPhone: validatedData.recipientPhone,
         subtotal,
-        total: subtotal, // Add delivery fee logic later
+        total,
+        promoCode: validatedData.promoCode,
+        promoDiscount: promoDiscount > 0 ? promoDiscount : null,
         items: {
           create: orderItems,
         },
@@ -160,6 +168,31 @@ export async function POST(request: NextRequest) {
         },
       },
     })
+
+    // Record promo code usage if one was applied
+    if (validatedData.promoCode && promoDiscount > 0) {
+      const promoCodeRecord = await prisma.promoCode.findUnique({
+        where: { code: validatedData.promoCode }
+      })
+
+      if (promoCodeRecord) {
+        // Create usage record
+        await prisma.promoCodeUsage.create({
+          data: {
+            promoCodeId: promoCodeRecord.id,
+            orderId: order.id,
+            customerPhone: validatedData.customerPhone,
+            discountAmount: promoDiscount,
+          },
+        })
+
+        // Increment usage count
+        await prisma.promoCode.update({
+          where: { id: promoCodeRecord.id },
+          data: { usedCount: { increment: 1 } },
+        })
+      }
+    }
 
     // Decrement stock for each item
     for (const item of validatedData.items) {

@@ -229,6 +229,10 @@ model Order {
   total             Int
   currency          String      @default("FCFA")
 
+  // Promo Code
+  promoCode         String?     // Code used (snapshot)
+  promoDiscount     Int?        // Discount amount applied in FCFA
+
   // Internal Notes
   adminNotes        String?     @db.Text
 
@@ -246,6 +250,7 @@ model Order {
   @@index([status])
   @@index([customerPhone])
   @@index([createdAt])
+  @@index([promoCode])
 }
 
 model OrderItem {
@@ -325,4 +330,60 @@ model User {
 enum UserRole {
   ADMIN
   SUPER_ADMIN
+}
+
+// ============ PROMO CODES ============
+
+model PromoCode {
+  id              String    @id @default(cuid())
+  code            String    @unique // Ex: LUXE20, BIENVENUE10
+  description     String?   @db.Text
+
+  // Discount
+  discountPercent Int       // Percentage discount (1-100)
+
+  // Validity
+  startsAt        DateTime  @default(now())
+  expiresAt       DateTime?
+  active          Boolean   @default(true)
+
+  // Usage limits
+  maxUses         Int?      // Total number of uses allowed (null = unlimited)
+  usedCount       Int       @default(0)
+  onePerCustomer  Boolean   @default(false) // One use per phone number
+
+  // Conditions
+  minOrderAmount  Int?      // Minimum order amount in FCFA
+
+  // Timestamps
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  // Relations
+  usages          PromoCodeUsage[]
+
+  @@index([code])
+  @@index([active])
+  @@index([expiresAt])
+}
+
+model PromoCodeUsage {
+  id              String    @id @default(cuid())
+
+  promoCodeId     String
+  promoCode       PromoCode @relation(fields: [promoCodeId], references: [id], onDelete: Cascade)
+
+  orderId         String?   @unique
+
+  // Customer info for tracking
+  customerPhone   String
+
+  // Discount applied
+  discountAmount  Int       // Amount saved in FCFA
+
+  createdAt       DateTime  @default(now())
+
+  @@index([promoCodeId])
+  @@index([customerPhone])
+  @@index([orderId])
 }

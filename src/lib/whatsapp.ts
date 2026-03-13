@@ -52,6 +52,13 @@ export function formatCartForWhatsApp(cart: CheckoutData): string {
   });
 
   message += "------------------\n";
+
+  // Show subtotal and promo code if applied
+  if (cart.promoCode && cart.subtotal) {
+    message += `Sous-total: ${cart.subtotal.toLocaleString("fr-FR")} FCFA\n`;
+    message += `\u{1F3AB} Code promo (${cart.promoCode.code}): -${cart.promoCode.discountAmount.toLocaleString("fr-FR")} FCFA (-${cart.promoCode.discountPercent}%)\n`;
+  }
+
   message += `\u{1F4B0} TOTAL: ${cart.total.toLocaleString("fr-FR")} FCFA\n\n`;
   message += "\u2705 Merci de confirmer cette commande pour procéder au paiement.";
 
