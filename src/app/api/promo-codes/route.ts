@@ -24,6 +24,8 @@ export async function GET(request: NextRequest) {
     const promoCodes = await prisma.promoCode.findMany({
       where,
       include: {
+        product: { select: { id: true, name: true } },
+        collection: { select: { id: true, name: true } },
         _count: {
           select: { usages: true }
         }
@@ -74,6 +76,8 @@ export async function POST(request: NextRequest) {
       onePerCustomer: z.boolean().optional().default(false),
       minOrderAmount: z.coerce.number().int().positive().optional().nullable(),
       active: z.boolean().optional().default(true),
+      productId: z.string().optional().nullable(),
+      collectionId: z.string().optional().nullable(),
     })
 
     const validatedData = promoCodeSchema.parse(body)
@@ -101,6 +105,8 @@ export async function POST(request: NextRequest) {
         onePerCustomer: validatedData.onePerCustomer,
         minOrderAmount: validatedData.minOrderAmount,
         active: validatedData.active,
+        productId: validatedData.productId ?? null,
+        collectionId: validatedData.collectionId ?? null,
       },
     })
 

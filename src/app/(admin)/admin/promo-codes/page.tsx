@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import useSWR from 'swr'
-import { Plus, Search, Edit, Trash2, Ticket, Save, X, Loader2, Copy, BarChart3, CheckCircle, XCircle } from 'lucide-react'
+import { Plus, Search, Edit, Trash2, Ticket, Save, X, Loader2, Copy, BarChart3, CheckCircle, XCircle, Package, Layers } from 'lucide-react'
 import { toast } from 'sonner'
 import ConfirmModal from '@/components/admin/ConfirmModal'
 import Link from 'next/link'
@@ -21,9 +21,25 @@ interface PromoCode {
   usedCount: number
   onePerCustomer: boolean
   minOrderAmount: number | null
+  productId: string | null
+  collectionId: string | null
+  product: { id: string; name: string } | null
+  collection: { id: string; name: string } | null
   _count: {
     usages: number
   }
+}
+
+interface Product {
+  id: string
+  name: string
+  color: string | null
+  collection: { name: string } | null
+}
+
+interface Collection {
+  id: string
+  name: string
 }
 
 export default function PromoCodesPage() {
@@ -48,9 +64,17 @@ export default function PromoCodesPage() {
     onePerCustomer: false,
     minOrderAmount: '',
     active: true,
+    restrictionType: 'all' as 'all' | 'product' | 'collection',
+    productId: '',
+    collectionId: '',
   })
 
   const { data, isLoading, mutate } = useSWR('/api/promo-codes', fetcher)
+  const { data: productsData } = useSWR('/api/products', fetcher)
+  const { data: collectionsData } = useSWR('/api/collections', fetcher)
+
+  const products: Product[] = productsData?.products || []
+  const collections: Collection[] = collectionsData?.collections || []
 
   const promoCodes: PromoCode[] = data?.promoCodes || []
   const stats = data?.stats || { total: 0, active: 0, totalUsages: 0 }
@@ -71,6 +95,9 @@ export default function PromoCodesPage() {
       onePerCustomer: false,
       minOrderAmount: '',
       active: true,
+      restrictionType: 'all',
+      productId: '',
+      collectionId: '',
     })
     setIsCreating(false)
     setEditingPromoCode(null)
@@ -88,6 +115,9 @@ export default function PromoCodesPage() {
       onePerCustomer: promoCode.onePerCustomer,
       minOrderAmount: promoCode.minOrderAmount?.toString() || '',
       active: promoCode.active,
+      restrictionType: promoCode.productId ? 'product' : promoCode.collectionId ? 'collection' : 'all',
+      productId: promoCode.productId || '',
+      collectionId: promoCode.collectionId || '',
     })
     setIsCreating(false)
   }
@@ -124,6 +154,8 @@ export default function PromoCodesPage() {
           onePerCustomer: formData.onePerCustomer,
           minOrderAmount: formData.minOrderAmount ? parseInt(formData.minOrderAmount) : null,
           active: formData.active,
+          productId: formData.restrictionType === 'product' ? formData.productId || null : null,
+          collectionId: formData.restrictionType === 'collection' ? formData.collectionId || null : null,
         }),
       })
 
@@ -390,6 +422,98 @@ export default function PromoCodesPage() {
               </div>
             </div>
 
+            {/* Restriction produit / collection */}
+            <div className="border border-neutral-200 rounded-lg p-4 space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-neutral-700 mb-3">
+                  Restriction d&apos;application
+                </label>
+                <div className="flex flex-wrap gap-3">
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="radio"
+                      name="restrictionType"
+                      value="all"
+                      checked={formData.restrictionType === 'all'}
+                      onChange={() => setFormData({ ...formData, restrictionType: 'all', productId: '', collectionId: '' })}
+                      className="accent-accent-gold"
+                    />
+                    <span className="text-sm text-neutral-700">Tous les produits</span>
+                  </label>
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="radio"
+                      name="restrictionType"
+                      value="product"
+                      checked={formData.restrictionType === 'product'}
+                      onChange={() => setFormData({ ...formData, restrictionType: 'product', collectionId: '' })}
+                      className="accent-accent-gold"
+                    />
+                    <span className="flex items-center gap-1 text-sm text-neutral-700">
+                      <Package className="w-4 h-4" /> Article spécifique
+                    </span>
+                  </label>
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="radio"
+                      name="restrictionType"
+                      value="collection"
+                      checked={formData.restrictionType === 'collection'}
+                      onChange={() => setFormData({ ...formData, restrictionType: 'collection', productId: '' })}
+                      className="accent-accent-gold"
+                    />
+                    <span className="flex items-center gap-1 text-sm text-neutral-700">
+                      <Layers className="w-4 h-4" /> Collection spécifique
+                    </span>
+                  </label>
+                </div>
+              </div>
+
+              {formData.restrictionType === 'product' && (
+                <div>
+                  <label className="block text-sm font-medium text-neutral-700 mb-2">
+                    Sélectionner l&apos;article
+                  </label>
+                  <select
+                    value={formData.productId}
+                    onChange={(e) => setFormData({ ...formData, productId: e.target.value })}
+                    className="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent-gold bg-white"
+                    required={formData.restrictionType === 'product'}
+                  >
+                    <option value="">-- Choisir un article --</option>
+                    {products.map((product) => (
+                      <option key={product.id} value={product.id}>
+                        {product.name}
+                        {product.color && product.color !== 'Main' ? ` - ${product.color}` : ''}
+                        {product.collection ? ` (${product.collection.name})` : ''}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+
+              {formData.restrictionType === 'collection' && (
+                <div>
+                  <label className="block text-sm font-medium text-neutral-700 mb-2">
+                    Sélectionner la collection
+                  </label>
+                  <select
+                    value={formData.collectionId}
+                    onChange={(e) => setFormData({ ...formData, collectionId: e.target.value })}
+                    className="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent-gold bg-white"
+                    required={formData.restrictionType === 'collection'}
+                  >
+                    <option value="">-- Choisir une collection --</option>
+                    {collections.map((collection) => (
+                      <option key={collection.id} value={collection.id}>
+                        {collection.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+            </div>
+
             <div className="flex items-center gap-6">
               <label className="flex items-center gap-2 cursor-pointer">
                 <input
@@ -498,6 +622,16 @@ export default function PromoCodesPage() {
                       {promoCode.minOrderAmount && (
                         <p className="text-xs text-neutral-500 mt-1">
                           Min. {promoCode.minOrderAmount.toLocaleString('fr-FR')} FCFA
+                        </p>
+                      )}
+                      {promoCode.product && (
+                        <p className="text-xs text-blue-600 mt-1 flex items-center gap-1">
+                          <Package className="w-3 h-3" /> {promoCode.product.name}
+                        </p>
+                      )}
+                      {promoCode.collection && (
+                        <p className="text-xs text-purple-600 mt-1 flex items-center gap-1">
+                          <Layers className="w-3 h-3" /> {promoCode.collection.name}
                         </p>
                       )}
                     </td>

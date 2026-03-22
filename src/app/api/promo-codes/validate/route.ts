@@ -11,13 +11,15 @@ export async function POST(request: NextRequest) {
       code: z.string().min(1).transform(val => val.toUpperCase().replace(/\s/g, '')),
       orderAmount: z.number().int().positive(),
       customerPhone: z.string().min(1),
+      productIds: z.array(z.string()).optional(),
     })
 
-    const { code, orderAmount, customerPhone } = validateSchema.parse(body)
+    const { code, orderAmount, customerPhone, productIds } = validateSchema.parse(body)
 
     // Find the promo code
     const promoCode = await prisma.promoCode.findUnique({
       where: { code },
+      include: { product: true, collection: true },
     })
 
     if (!promoCode) {
@@ -83,6 +85,42 @@ export async function POST(request: NextRequest) {
           valid: false,
           error: `Ce code promo nécessite un montant minimum de ${promoCode.minOrderAmount.toLocaleString('fr-FR')} FCFA`
         },
+        { status: 400 }
+      )
+    }
+
+    // Check product restriction
+    if (promoCode.productId && productIds && productIds.length > 0) {
+      if (!productIds.includes(promoCode.productId)) {
+        return NextResponse.json(
+          { valid: false, error: `Ce code promo est valable uniquement pour l'article "${promoCode.product?.name}"` },
+          { status: 400 }
+        )
+      }
+    } else if (promoCode.productId && (!productIds || productIds.length === 0)) {
+      return NextResponse.json(
+        { valid: false, error: `Ce code promo est valable uniquement pour un article spécifique` },
+        { status: 400 }
+      )
+    }
+
+    // Check collection restriction
+    if (promoCode.collectionId && productIds && productIds.length > 0) {
+      const productsInCollection = await prisma.product.count({
+        where: {
+          id: { in: productIds },
+          collectionId: promoCode.collectionId,
+        },
+      })
+      if (productsInCollection === 0) {
+        return NextResponse.json(
+          { valid: false, error: `Ce code promo est valable uniquement pour la collection "${promoCode.collection?.name}"` },
+          { status: 400 }
+        )
+      }
+    } else if (promoCode.collectionId && (!productIds || productIds.length === 0)) {
+      return NextResponse.json(
+        { valid: false, error: `Ce code promo est valable uniquement pour une collection spécifique` },
         { status: 400 }
       )
     }

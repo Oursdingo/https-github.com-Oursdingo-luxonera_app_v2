@@ -8,6 +8,7 @@ import PhoneInput from 'react-phone-number-input'
 import 'react-phone-number-input/style.css'
 import { toast } from 'sonner'
 import Image from 'next/image'
+import { Ticket, Loader2, CheckCircle, X } from 'lucide-react'
 
 interface BuyNowModalProps {
   watch: {
@@ -28,6 +29,15 @@ export default function BuyNowModal({ watch, isOpen, onClose }: BuyNowModalProps
   const [customerPhone, setCustomerPhone] = useState<string>()
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [nameError, setNameError] = useState('')
+
+  // Promo code
+  const [promoCode, setPromoCode] = useState('')
+  const [isValidatingPromo, setIsValidatingPromo] = useState(false)
+  const [appliedPromo, setAppliedPromo] = useState<{
+    code: string
+    discountPercent: number
+    discountAmount: number
+  } | null>(null)
 
   // Personnalisation
   const [showCustomization, setShowCustomization] = useState(false)
@@ -83,9 +93,72 @@ export default function BuyNowModal({ watch, isOpen, onClose }: BuyNowModalProps
     }
   }
 
+  const validatePromoCode = async () => {
+    if (!promoCode.trim()) {
+      toast.error('Erreur', { description: 'Veuillez entrer un code promo' })
+      return
+    }
+
+    if (!customerPhone) {
+      toast.error('Erreur', { description: "Veuillez d'abord entrer votre numéro de téléphone" })
+      return
+    }
+
+    setIsValidatingPromo(true)
+
+    try {
+      const response = await fetch('/api/promo-codes/validate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          code: promoCode.trim(),
+          orderAmount: watch.price,
+          customerPhone,
+          productIds: [watch.id],
+        }),
+      })
+
+      const data = await response.json()
+
+      if (!data.valid) {
+        toast.error('Code invalide', { description: data.error })
+        return
+      }
+
+      setAppliedPromo({
+        code: data.promoCode.code,
+        discountPercent: data.discount.percent,
+        discountAmount: data.discount.amount,
+      })
+
+      toast.success('Code promo appliqué', {
+        description: `${data.discount.percent}% de réduction appliquée`,
+      })
+    } catch {
+      toast.error('Erreur', { description: 'Impossible de valider le code promo' })
+    } finally {
+      setIsValidatingPromo(false)
+    }
+  }
+
+  const removePromoCode = () => {
+    setAppliedPromo(null)
+    setPromoCode('')
+    toast.info('Code promo retiré')
+  }
+
+  const getFinalTotal = () => {
+    if (appliedPromo) {
+      return watch.price - appliedPromo.discountAmount
+    }
+    return watch.price
+  }
+
   const resetForm = () => {
     setCustomerName('')
     setCustomerPhone(undefined)
+    setPromoCode('')
+    setAppliedPromo(null)
     setDeliveryMessage('')
     setDeliverToOther(false)
     setRecipientFirstName('')
@@ -151,6 +224,8 @@ export default function BuyNowModal({ watch, isOpen, onClose }: BuyNowModalProps
         recipientFirstName: deliverToOther ? recipientFirstName : undefined,
         recipientLastName: deliverToOther ? recipientLastName : undefined,
         recipientPhone: deliverToOther ? recipientPhone : undefined,
+        promoCode: appliedPromo?.code || undefined,
+        promoDiscount: appliedPromo?.discountAmount || undefined,
       }
 
       const response = await fetch('/api/orders', {
@@ -179,7 +254,8 @@ export default function BuyNowModal({ watch, isOpen, onClose }: BuyNowModalProps
             collection: watch.collection?.name,
           },
         ],
-        total: watch.price,
+        total: getFinalTotal(),
+        subtotal: watch.price,
         customerName,
         customerPhone,
         orderNumber: order.orderNumber,
@@ -192,6 +268,13 @@ export default function BuyNowModal({ watch, isOpen, onClose }: BuyNowModalProps
                 phone: recipientPhone,
               }
             : undefined,
+        promoCode: appliedPromo
+          ? {
+              code: appliedPromo.code,
+              discountPercent: appliedPromo.discountPercent,
+              discountAmount: appliedPromo.discountAmount,
+            }
+          : undefined,
       }
 
       openWhatsAppCheckout(cart)
@@ -457,12 +540,66 @@ export default function BuyNowModal({ watch, isOpen, onClose }: BuyNowModalProps
             )}
           </div>
 
+          {/* Promo Code Section */}
+          <div className="border border-neutral-200 rounded-lg p-4">
+            <div className="flex items-center gap-2 mb-3">
+              <Ticket className="w-5 h-5 text-accent-gold" />
+              <span className="font-medium">Code promo</span>
+            </div>
+
+            {appliedPromo ? (
+              <div className="flex items-center justify-between bg-green-50 border border-green-200 rounded-lg p-3">
+                <div className="flex items-center gap-2">
+                  <CheckCircle className="w-5 h-5 text-green-600" />
+                  <div>
+                    <span className="font-mono font-bold text-green-700">{appliedPromo.code}</span>
+                    <span className="ml-2 text-sm text-green-600">-{appliedPromo.discountPercent}%</span>
+                  </div>
+                </div>
+                <button
+                  onClick={removePromoCode}
+                  className="p-1.5 hover:bg-green-100 rounded-lg transition-colors"
+                >
+                  <X className="w-4 h-4 text-green-600" />
+                </button>
+              </div>
+            ) : (
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  placeholder="Entrez votre code"
+                  value={promoCode}
+                  onChange={(e) => setPromoCode(e.target.value.toUpperCase())}
+                  className="flex-1 min-w-0 px-4 py-2.5 border border-neutral-300 rounded-lg focus:outline-none focus:border-black transition-colors uppercase font-mono"
+                />
+                <button
+                  onClick={validatePromoCode}
+                  disabled={isValidatingPromo || !promoCode.trim()}
+                  className="flex-shrink-0 px-4 py-2.5 bg-[#25D366] text-white rounded-lg font-medium hover:bg-[#128C7E] disabled:bg-neutral-300 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
+                >
+                  {isValidatingPromo ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Appliquer'}
+                </button>
+              </div>
+            )}
+          </div>
+
           {/* Order Summary */}
           <div className="bg-neutral-50 p-4 rounded-lg space-y-3">
             <div className="flex justify-between text-sm text-neutral-600">
               <span>Sous-total (1 article)</span>
               <span className="font-medium">{formatPrice(watch.price)}</span>
             </div>
+
+            {appliedPromo && (
+              <div className="flex justify-between text-sm text-green-600">
+                <span className="flex items-center gap-1">
+                  <Ticket className="w-4 h-4" />
+                  Réduction ({appliedPromo.code})
+                </span>
+                <span className="font-medium">-{formatPrice(appliedPromo.discountAmount)}</span>
+              </div>
+            )}
+
             <div className="flex justify-between text-sm text-neutral-600">
               <span>Livraison</span>
               <span className="font-medium">À confirmer</span>
@@ -470,7 +607,7 @@ export default function BuyNowModal({ watch, isOpen, onClose }: BuyNowModalProps
             <div className="border-t border-neutral-200 pt-3">
               <div className="flex justify-between text-xl font-bold">
                 <span>Total</span>
-                <span>{formatPrice(watch.price)}</span>
+                <span>{formatPrice(getFinalTotal())}</span>
               </div>
             </div>
           </div>

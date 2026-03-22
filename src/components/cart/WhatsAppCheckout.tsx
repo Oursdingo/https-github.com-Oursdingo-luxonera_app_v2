@@ -104,6 +104,7 @@ export default function WhatsAppCheckout() {
           code: promoCode.trim(),
           orderAmount: getTotalPrice(),
           customerPhone,
+          productIds: items.map((item) => item.id),
         }),
       });
 
