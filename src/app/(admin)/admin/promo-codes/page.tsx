@@ -23,8 +23,7 @@ interface PromoCode {
   onePerCustomer: boolean
   minOrderAmount: number | null
   productIds: string[]
-  collectionId: string | null
-  collection: { id: string; name: string } | null
+  collectionIds: string[]
   _count: { usages: number }
 }
 
@@ -182,53 +181,104 @@ function ProductPicker({
   )
 }
 
-// ─── Collection Picker ───────────────────────────────────────────────────────
+// ─── Collection Picker (multi-select) ───────────────────────────────────────
 function CollectionPicker({
   collections,
-  selectedId,
+  selectedIds,
   onChange,
 }: {
   collections: Collection[]
-  selectedId: string
-  onChange: (id: string) => void
+  selectedIds: string[]
+  onChange: (ids: string[]) => void
 }) {
+  const toggle = (id: string) => {
+    if (selectedIds.includes(id)) {
+      onChange(selectedIds.filter((x) => x !== id))
+    } else {
+      onChange([...selectedIds, id])
+    }
+  }
+
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-56 overflow-y-auto">
-      {collections.map((col) => {
-        const isSelected = selectedId === col.id
-        return (
-          <button
-            key={col.id}
-            type="button"
-            onClick={() => onChange(isSelected ? '' : col.id)}
-            className={`flex items-center gap-2 p-3 rounded-lg border-2 text-left transition-all ${
-              isSelected
-                ? 'border-accent-gold bg-accent-gold/5'
-                : 'border-neutral-200 hover:border-neutral-300 bg-white'
-            }`}
-          >
-            {col.imageUrl ? (
-              <div className="relative w-8 h-8 rounded overflow-hidden flex-shrink-0 bg-neutral-100">
-                <Image
-                  src={col.imageUrl}
-                  alt={col.name}
-                  fill
-                  className="object-cover"
-                  unoptimized={col.imageUrl.startsWith('/uploads/')}
-                />
-              </div>
-            ) : (
-              <div className="w-8 h-8 rounded bg-neutral-100 flex items-center justify-center flex-shrink-0">
-                <Layers className="w-4 h-4 text-neutral-400" />
-              </div>
-            )}
-            <span className={`text-xs font-medium truncate ${isSelected ? 'text-neutral-900' : 'text-neutral-700'}`}>
-              {col.name}
+    <div className="space-y-3">
+      {/* Selected chips */}
+      {selectedIds.length > 0 && (
+        <div className="flex flex-wrap gap-2">
+          {collections.filter((c) => selectedIds.includes(c.id)).map((col) => (
+            <span
+              key={col.id}
+              className="inline-flex items-center gap-1.5 pl-1 pr-2 py-1 bg-purple-50 border border-purple-200 text-purple-800 rounded-full text-xs font-medium"
+            >
+              {col.imageUrl ? (
+                <div className="relative w-5 h-5 rounded-full overflow-hidden flex-shrink-0 bg-neutral-100">
+                  <Image
+                    src={col.imageUrl}
+                    alt={col.name}
+                    fill
+                    className="object-cover"
+                    unoptimized={col.imageUrl.startsWith('/uploads/')}
+                  />
+                </div>
+              ) : (
+                <div className="w-5 h-5 rounded-full bg-purple-100 flex items-center justify-center flex-shrink-0">
+                  <Layers className="w-3 h-3 text-purple-400" />
+                </div>
+              )}
+              <span className="max-w-[100px] truncate">{col.name}</span>
+              <button type="button" onClick={() => toggle(col.id)} className="hover:text-red-500 transition-colors">
+                <X className="w-3 h-3" />
+              </button>
             </span>
-            {isSelected && <CheckCircle className="w-3.5 h-3.5 text-accent-gold flex-shrink-0 ml-auto" />}
-          </button>
-        )
-      })}
+          ))}
+        </div>
+      )}
+
+      {/* Grid of collections */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-56 overflow-y-auto pr-1">
+        {collections.map((col) => {
+          const isSelected = selectedIds.includes(col.id)
+          return (
+            <button
+              key={col.id}
+              type="button"
+              onClick={() => toggle(col.id)}
+              className={`flex items-center gap-2 p-3 rounded-lg border-2 text-left transition-all ${
+                isSelected
+                  ? 'border-accent-gold bg-accent-gold/5'
+                  : 'border-neutral-200 hover:border-neutral-300 bg-white'
+              }`}
+            >
+              <div className="relative w-10 h-10 rounded-lg overflow-hidden flex-shrink-0 bg-neutral-100">
+                {col.imageUrl ? (
+                  <Image
+                    src={col.imageUrl}
+                    alt={col.name}
+                    fill
+                    className="object-cover"
+                    unoptimized={col.imageUrl.startsWith('/uploads/')}
+                  />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center">
+                    <Layers className="w-5 h-5 text-neutral-400" />
+                  </div>
+                )}
+              </div>
+              <div className="flex-1 min-w-0">
+                <span className={`text-xs font-medium truncate block ${isSelected ? 'text-neutral-900' : 'text-neutral-700'}`}>
+                  {col.name}
+                </span>
+              </div>
+              {isSelected && <CheckCircle className="w-4 h-4 text-accent-gold flex-shrink-0" />}
+            </button>
+          )
+        })}
+      </div>
+
+      {selectedIds.length > 0 && (
+        <p className="text-xs text-neutral-500">
+          {selectedIds.length} collection{selectedIds.length > 1 ? 's' : ''} sélectionnée{selectedIds.length > 1 ? 's' : ''}
+        </p>
+      )}
     </div>
   )
 }
@@ -258,7 +308,7 @@ export default function PromoCodesPage() {
     active: true,
     restrictionType: 'all' as 'all' | 'product' | 'collection',
     productIds: [] as string[],
-    collectionId: '',
+    collectionIds: [] as string[],
   })
 
   const { data, isLoading, mutate } = useSWR('/api/promo-codes', fetcher)
@@ -289,7 +339,7 @@ export default function PromoCodesPage() {
       active: true,
       restrictionType: 'all',
       productIds: [],
-      collectionId: '',
+      collectionIds: [],
     })
     setIsCreating(false)
     setEditingPromoCode(null)
@@ -307,9 +357,9 @@ export default function PromoCodesPage() {
       onePerCustomer: promoCode.onePerCustomer,
       minOrderAmount: promoCode.minOrderAmount?.toString() || '',
       active: promoCode.active,
-      restrictionType: promoCode.productIds?.length > 0 ? 'product' : promoCode.collectionId ? 'collection' : 'all',
+      restrictionType: promoCode.productIds?.length > 0 ? 'product' : promoCode.collectionIds?.length > 0 ? 'collection' : 'all',
       productIds: promoCode.productIds || [],
-      collectionId: promoCode.collectionId || '',
+      collectionIds: promoCode.collectionIds || [],
     })
     setIsCreating(false)
   }
@@ -332,8 +382,8 @@ export default function PromoCodesPage() {
       return
     }
 
-    if (formData.restrictionType === 'collection' && !formData.collectionId) {
-      toast.error('Erreur', { description: 'Veuillez sélectionner une collection' })
+    if (formData.restrictionType === 'collection' && formData.collectionIds.length === 0) {
+      toast.error('Erreur', { description: 'Veuillez sélectionner au moins une collection' })
       return
     }
 
@@ -357,7 +407,7 @@ export default function PromoCodesPage() {
           minOrderAmount: formData.minOrderAmount ? parseInt(formData.minOrderAmount) : null,
           active: formData.active,
           productIds: formData.restrictionType === 'product' ? formData.productIds : [],
-          collectionId: formData.restrictionType === 'collection' ? formData.collectionId || null : null,
+          collectionIds: formData.restrictionType === 'collection' ? formData.collectionIds : [],
         }),
       })
 
@@ -663,7 +713,7 @@ export default function PromoCodesPage() {
                         ...formData,
                         restrictionType: value as 'all' | 'product' | 'collection',
                         productIds: value !== 'product' ? [] : formData.productIds,
-                        collectionId: value !== 'collection' ? '' : formData.collectionId,
+                        collectionIds: value !== 'collection' ? [] : formData.collectionIds,
                       })}
                       className={`flex items-center gap-2 px-4 py-2 rounded-lg border-2 text-sm font-medium transition-all ${
                         formData.restrictionType === value
@@ -694,12 +744,12 @@ export default function PromoCodesPage() {
               {formData.restrictionType === 'collection' && (
                 <div>
                   <p className="text-xs font-medium text-neutral-600 mb-2 uppercase tracking-wide">
-                    Sélectionner la collection concernée
+                    Sélectionner les collections concernées
                   </p>
                   <CollectionPicker
                     collections={collections}
-                    selectedId={formData.collectionId}
-                    onChange={(id) => setFormData({ ...formData, collectionId: id })}
+                    selectedIds={formData.collectionIds}
+                    onChange={(ids) => setFormData({ ...formData, collectionIds: ids })}
                   />
                 </div>
               )}
@@ -799,9 +849,10 @@ export default function PromoCodesPage() {
                           {promoCode.productIds.length} article{promoCode.productIds.length > 1 ? 's' : ''}
                         </p>
                       )}
-                      {promoCode.collection && (
+                      {promoCode.collectionIds?.length > 0 && (
                         <p className="text-xs text-purple-600 mt-1 flex items-center gap-1">
-                          <Layers className="w-3 h-3" /> {promoCode.collection.name}
+                          <Layers className="w-3 h-3" />
+                          {promoCode.collectionIds.length} collection{promoCode.collectionIds.length > 1 ? 's' : ''}
                         </p>
                       )}
                     </td>

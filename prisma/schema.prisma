@@ -41,7 +41,6 @@ model Collection {
   brand       Brand     @relation(fields: [brandId], references: [id], onDelete: Cascade)
 
   products    Product[]
-  promoCodes  PromoCode[] @relation("PromoCodeCollection")
 
   @@index([slug])
   @@index([featured])
@@ -357,9 +356,8 @@ model PromoCode {
   minOrderAmount  Int?      // Minimum order amount in FCFA
 
   // Product/Collection Restriction (optional)
-  productIds      String[]    @default([])  // Multiple products allowed
-  collectionId    String?
-  collection      Collection? @relation("PromoCodeCollection", fields: [collectionId], references: [id], onDelete: SetNull)
+  productIds      String[]    @default([])  // Multiple products
+  collectionIds   String[]    @default([])  // Multiple collections
 
   // Timestamps
   createdAt       DateTime  @default(now())
@@ -371,7 +369,6 @@ model PromoCode {
   @@index([code])
   @@index([active])
   @@index([expiresAt])
-  @@index([collectionId])
 }
 
 model PromoCodeUsage {

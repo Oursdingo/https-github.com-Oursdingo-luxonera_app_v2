@@ -19,7 +19,6 @@ export async function POST(request: NextRequest) {
     // Find the promo code
     const promoCode = await prisma.promoCode.findUnique({
       where: { code },
-      include: { collection: true },
     })
 
     if (!promoCode) {
@@ -107,19 +106,19 @@ export async function POST(request: NextRequest) {
     }
 
     // Check collection restriction
-    if (promoCode.collectionId) {
+    if (promoCode.collectionIds.length > 0) {
       if (!productIds || productIds.length === 0) {
         return NextResponse.json(
-          { valid: false, error: `Ce code promo est valable uniquement pour la collection "${promoCode.collection?.name}"` },
+          { valid: false, error: 'Ce code promo est valable uniquement pour des collections spécifiques' },
           { status: 400 }
         )
       }
-      const productsInCollection = await prisma.product.count({
-        where: { id: { in: productIds }, collectionId: promoCode.collectionId },
+      const productsInCollections = await prisma.product.count({
+        where: { id: { in: productIds }, collectionId: { in: promoCode.collectionIds } },
       })
-      if (productsInCollection === 0) {
+      if (productsInCollections === 0) {
         return NextResponse.json(
-          { valid: false, error: `Ce code promo est valable uniquement pour la collection "${promoCode.collection?.name}"` },
+          { valid: false, error: 'Ce code promo n\'est pas valable pour les collections sélectionnées' },
           { status: 400 }
         )
       }

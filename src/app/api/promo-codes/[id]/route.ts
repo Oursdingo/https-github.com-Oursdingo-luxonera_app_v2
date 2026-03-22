@@ -83,7 +83,7 @@ export async function PUT(
       minOrderAmount: z.coerce.number().int().positive().optional().nullable(),
       active: z.boolean().optional(),
       productIds: z.array(z.string()).optional(),
-      collectionId: z.string().optional().nullable(),
+      collectionIds: z.array(z.string()).optional(),
     })
 
     const validatedData = promoCodeSchema.parse(body)
