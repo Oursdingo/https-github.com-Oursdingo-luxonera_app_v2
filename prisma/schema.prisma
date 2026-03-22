@@ -97,7 +97,6 @@ model Product {
   orderItems        OrderItem[]
   stockMovements    StockMovement[]
   stockReservations StockReservation[]
-  promoCodes        PromoCode[]       @relation("PromoCodeProduct")
 
   @@index([slug])
   @@index([brandId])
@@ -358,8 +357,7 @@ model PromoCode {
   minOrderAmount  Int?      // Minimum order amount in FCFA
 
   // Product/Collection Restriction (optional)
-  productId       String?
-  product         Product?    @relation("PromoCodeProduct", fields: [productId], references: [id], onDelete: SetNull)
+  productIds      String[]    @default([])  // Multiple products allowed
   collectionId    String?
   collection      Collection? @relation("PromoCodeCollection", fields: [collectionId], references: [id], onDelete: SetNull)
 
@@ -373,7 +371,6 @@ model PromoCode {
   @@index([code])
   @@index([active])
   @@index([expiresAt])
-  @@index([productId])
   @@index([collectionId])
 }
 

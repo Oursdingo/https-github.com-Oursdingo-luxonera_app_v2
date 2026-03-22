@@ -19,7 +19,7 @@ export async function POST(request: NextRequest) {
     // Find the promo code
     const promoCode = await prisma.promoCode.findUnique({
       where: { code },
-      include: { product: true, collection: true },
+      include: { collection: true },
     })
 
     if (!promoCode) {
@@ -89,28 +89,33 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Check product restriction
-    if (promoCode.productId && productIds && productIds.length > 0) {
-      if (!productIds.includes(promoCode.productId)) {
+    // Check product restriction (multiple products allowed)
+    if (promoCode.productIds.length > 0) {
+      if (!productIds || productIds.length === 0) {
         return NextResponse.json(
-          { valid: false, error: `Ce code promo est valable uniquement pour l'article "${promoCode.product?.name}"` },
+          { valid: false, error: 'Ce code promo est valable uniquement pour des articles spécifiques' },
           { status: 400 }
         )
       }
-    } else if (promoCode.productId && (!productIds || productIds.length === 0)) {
-      return NextResponse.json(
-        { valid: false, error: `Ce code promo est valable uniquement pour un article spécifique` },
-        { status: 400 }
-      )
+      const hasMatch = productIds.some(id => promoCode.productIds.includes(id))
+      if (!hasMatch) {
+        return NextResponse.json(
+          { valid: false, error: 'Ce code promo n\'est pas valable pour les articles sélectionnés' },
+          { status: 400 }
+        )
+      }
     }
 
     // Check collection restriction
-    if (promoCode.collectionId && productIds && productIds.length > 0) {
+    if (promoCode.collectionId) {
+      if (!productIds || productIds.length === 0) {
+        return NextResponse.json(
+          { valid: false, error: `Ce code promo est valable uniquement pour la collection "${promoCode.collection?.name}"` },
+          { status: 400 }
+        )
+      }
       const productsInCollection = await prisma.product.count({
-        where: {
-          id: { in: productIds },
-          collectionId: promoCode.collectionId,
-        },
+        where: { id: { in: productIds }, collectionId: promoCode.collectionId },
       })
       if (productsInCollection === 0) {
         return NextResponse.json(
@@ -118,11 +123,6 @@ export async function POST(request: NextRequest) {
           { status: 400 }
         )
       }
-    } else if (promoCode.collectionId && (!productIds || productIds.length === 0)) {
-      return NextResponse.json(
-        { valid: false, error: `Ce code promo est valable uniquement pour une collection spécifique` },
-        { status: 400 }
-      )
     }
 
     // Calculate discount

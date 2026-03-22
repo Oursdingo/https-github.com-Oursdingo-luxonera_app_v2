@@ -1,11 +1,12 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import useSWR from 'swr'
 import { Plus, Search, Edit, Trash2, Ticket, Save, X, Loader2, Copy, BarChart3, CheckCircle, XCircle, Package, Layers } from 'lucide-react'
 import { toast } from 'sonner'
 import ConfirmModal from '@/components/admin/ConfirmModal'
 import Link from 'next/link'
+import Image from 'next/image'
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json())
 
@@ -21,27 +22,218 @@ interface PromoCode {
   usedCount: number
   onePerCustomer: boolean
   minOrderAmount: number | null
-  productId: string | null
+  productIds: string[]
   collectionId: string | null
-  product: { id: string; name: string } | null
   collection: { id: string; name: string } | null
-  _count: {
-    usages: number
-  }
+  _count: { usages: number }
 }
 
 interface Product {
   id: string
   name: string
   color: string | null
+  mainImage: string
   collection: { name: string } | null
 }
 
 interface Collection {
   id: string
   name: string
+  imageUrl: string | null
 }
 
+// ─── Product Picker Component ────────────────────────────────────────────────
+function ProductPicker({
+  products,
+  selectedIds,
+  onChange,
+}: {
+  products: Product[]
+  selectedIds: string[]
+  onChange: (ids: string[]) => void
+}) {
+  const [search, setSearch] = useState('')
+
+  const filtered = useMemo(
+    () =>
+      products.filter((p) =>
+        `${p.name} ${p.color || ''} ${p.collection?.name || ''}`
+          .toLowerCase()
+          .includes(search.toLowerCase())
+      ),
+    [products, search]
+  )
+
+  const toggle = (id: string) => {
+    if (selectedIds.includes(id)) {
+      onChange(selectedIds.filter((x) => x !== id))
+    } else {
+      onChange([...selectedIds, id])
+    }
+  }
+
+  const selectedProducts = products.filter((p) => selectedIds.includes(p.id))
+
+  return (
+    <div className="space-y-3">
+      {/* Selected chips */}
+      {selectedProducts.length > 0 && (
+        <div className="flex flex-wrap gap-2">
+          {selectedProducts.map((p) => (
+            <span
+              key={p.id}
+              className="inline-flex items-center gap-1.5 pl-1 pr-2 py-1 bg-accent-gold/10 border border-accent-gold/30 text-neutral-800 rounded-full text-xs font-medium"
+            >
+              <div className="relative w-5 h-5 rounded-full overflow-hidden bg-neutral-100 flex-shrink-0">
+                <Image
+                  src={p.mainImage}
+                  alt={p.name}
+                  fill
+                  className="object-cover"
+                  unoptimized={p.mainImage.startsWith('/uploads/')}
+                />
+              </div>
+              <span className="max-w-[120px] truncate">{p.name}{p.color && p.color !== 'Main' ? ` · ${p.color}` : ''}</span>
+              <button
+                type="button"
+                onClick={() => toggle(p.id)}
+                className="hover:text-red-500 transition-colors ml-0.5"
+              >
+                <X className="w-3 h-3" />
+              </button>
+            </span>
+          ))}
+        </div>
+      )}
+
+      {/* Search */}
+      <div className="relative">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-400" />
+        <input
+          type="text"
+          placeholder="Rechercher un article..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="w-full pl-9 pr-4 py-2 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent-gold text-sm"
+        />
+        {search && (
+          <button
+            type="button"
+            onClick={() => setSearch('')}
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-neutral-600"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        )}
+      </div>
+
+      {/* List */}
+      <div className="max-h-56 overflow-y-auto border border-neutral-200 rounded-lg divide-y divide-neutral-100">
+        {filtered.length === 0 ? (
+          <p className="p-4 text-sm text-neutral-500 text-center">Aucun article trouvé</p>
+        ) : (
+          filtered.map((product) => {
+            const isSelected = selectedIds.includes(product.id)
+            return (
+              <label
+                key={product.id}
+                className={`flex items-center gap-3 p-3 cursor-pointer transition-colors ${
+                  isSelected ? 'bg-accent-gold/5' : 'hover:bg-neutral-50'
+                }`}
+              >
+                <input
+                  type="checkbox"
+                  checked={isSelected}
+                  onChange={() => toggle(product.id)}
+                  className="w-4 h-4 accent-accent-gold flex-shrink-0"
+                />
+                <div className="relative w-10 h-10 rounded-lg overflow-hidden bg-neutral-100 flex-shrink-0">
+                  <Image
+                    src={product.mainImage}
+                    alt={product.name}
+                    fill
+                    className="object-cover"
+                    unoptimized={product.mainImage.startsWith('/uploads/')}
+                  />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-neutral-900 truncate">{product.name}</p>
+                  <p className="text-xs text-neutral-500 truncate">
+                    {[product.collection?.name, product.color && product.color !== 'Main' ? product.color : null]
+                      .filter(Boolean)
+                      .join(' · ')}
+                  </p>
+                </div>
+                {isSelected && (
+                  <CheckCircle className="w-4 h-4 text-accent-gold flex-shrink-0" />
+                )}
+              </label>
+            )
+          })
+        )}
+      </div>
+
+      {selectedIds.length > 0 && (
+        <p className="text-xs text-neutral-500">
+          {selectedIds.length} article{selectedIds.length > 1 ? 's' : ''} sélectionné{selectedIds.length > 1 ? 's' : ''}
+        </p>
+      )}
+    </div>
+  )
+}
+
+// ─── Collection Picker ───────────────────────────────────────────────────────
+function CollectionPicker({
+  collections,
+  selectedId,
+  onChange,
+}: {
+  collections: Collection[]
+  selectedId: string
+  onChange: (id: string) => void
+}) {
+  return (
+    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-56 overflow-y-auto">
+      {collections.map((col) => {
+        const isSelected = selectedId === col.id
+        return (
+          <button
+            key={col.id}
+            type="button"
+            onClick={() => onChange(isSelected ? '' : col.id)}
+            className={`flex items-center gap-2 p-3 rounded-lg border-2 text-left transition-all ${
+              isSelected
+                ? 'border-accent-gold bg-accent-gold/5'
+                : 'border-neutral-200 hover:border-neutral-300 bg-white'
+            }`}
+          >
+            {col.imageUrl ? (
+              <div className="relative w-8 h-8 rounded overflow-hidden flex-shrink-0 bg-neutral-100">
+                <Image
+                  src={col.imageUrl}
+                  alt={col.name}
+                  fill
+                  className="object-cover"
+                  unoptimized={col.imageUrl.startsWith('/uploads/')}
+                />
+              </div>
+            ) : (
+              <div className="w-8 h-8 rounded bg-neutral-100 flex items-center justify-center flex-shrink-0">
+                <Layers className="w-4 h-4 text-neutral-400" />
+              </div>
+            )}
+            <span className={`text-xs font-medium truncate ${isSelected ? 'text-neutral-900' : 'text-neutral-700'}`}>
+              {col.name}
+            </span>
+            {isSelected && <CheckCircle className="w-3.5 h-3.5 text-accent-gold flex-shrink-0 ml-auto" />}
+          </button>
+        )
+      })}
+    </div>
+  )
+}
+
+// ─── Main Page ───────────────────────────────────────────────────────────────
 export default function PromoCodesPage() {
   const [searchQuery, setSearchQuery] = useState('')
   const [isCreating, setIsCreating] = useState(false)
@@ -65,7 +257,7 @@ export default function PromoCodesPage() {
     minOrderAmount: '',
     active: true,
     restrictionType: 'all' as 'all' | 'product' | 'collection',
-    productId: '',
+    productIds: [] as string[],
     collectionId: '',
   })
 
@@ -96,7 +288,7 @@ export default function PromoCodesPage() {
       minOrderAmount: '',
       active: true,
       restrictionType: 'all',
-      productId: '',
+      productIds: [],
       collectionId: '',
     })
     setIsCreating(false)
@@ -115,8 +307,8 @@ export default function PromoCodesPage() {
       onePerCustomer: promoCode.onePerCustomer,
       minOrderAmount: promoCode.minOrderAmount?.toString() || '',
       active: promoCode.active,
-      restrictionType: promoCode.productId ? 'product' : promoCode.collectionId ? 'collection' : 'all',
-      productId: promoCode.productId || '',
+      restrictionType: promoCode.productIds?.length > 0 ? 'product' : promoCode.collectionId ? 'collection' : 'all',
+      productIds: promoCode.productIds || [],
       collectionId: promoCode.collectionId || '',
     })
     setIsCreating(false)
@@ -132,6 +324,16 @@ export default function PromoCodesPage() {
 
     if (formData.discountPercent < 1 || formData.discountPercent > 100) {
       toast.error('Erreur', { description: 'Le pourcentage doit etre entre 1 et 100' })
+      return
+    }
+
+    if (formData.restrictionType === 'product' && formData.productIds.length === 0) {
+      toast.error('Erreur', { description: 'Veuillez sélectionner au moins un article' })
+      return
+    }
+
+    if (formData.restrictionType === 'collection' && !formData.collectionId) {
+      toast.error('Erreur', { description: 'Veuillez sélectionner une collection' })
       return
     }
 
@@ -154,7 +356,7 @@ export default function PromoCodesPage() {
           onePerCustomer: formData.onePerCustomer,
           minOrderAmount: formData.minOrderAmount ? parseInt(formData.minOrderAmount) : null,
           active: formData.active,
-          productId: formData.restrictionType === 'product' ? formData.productId || null : null,
+          productIds: formData.restrictionType === 'product' ? formData.productIds : [],
           collectionId: formData.restrictionType === 'collection' ? formData.collectionId || null : null,
         }),
       })
@@ -422,98 +624,6 @@ export default function PromoCodesPage() {
               </div>
             </div>
 
-            {/* Restriction produit / collection */}
-            <div className="border border-neutral-200 rounded-lg p-4 space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-neutral-700 mb-3">
-                  Restriction d&apos;application
-                </label>
-                <div className="flex flex-wrap gap-3">
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <input
-                      type="radio"
-                      name="restrictionType"
-                      value="all"
-                      checked={formData.restrictionType === 'all'}
-                      onChange={() => setFormData({ ...formData, restrictionType: 'all', productId: '', collectionId: '' })}
-                      className="accent-accent-gold"
-                    />
-                    <span className="text-sm text-neutral-700">Tous les produits</span>
-                  </label>
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <input
-                      type="radio"
-                      name="restrictionType"
-                      value="product"
-                      checked={formData.restrictionType === 'product'}
-                      onChange={() => setFormData({ ...formData, restrictionType: 'product', collectionId: '' })}
-                      className="accent-accent-gold"
-                    />
-                    <span className="flex items-center gap-1 text-sm text-neutral-700">
-                      <Package className="w-4 h-4" /> Article spécifique
-                    </span>
-                  </label>
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <input
-                      type="radio"
-                      name="restrictionType"
-                      value="collection"
-                      checked={formData.restrictionType === 'collection'}
-                      onChange={() => setFormData({ ...formData, restrictionType: 'collection', productId: '' })}
-                      className="accent-accent-gold"
-                    />
-                    <span className="flex items-center gap-1 text-sm text-neutral-700">
-                      <Layers className="w-4 h-4" /> Collection spécifique
-                    </span>
-                  </label>
-                </div>
-              </div>
-
-              {formData.restrictionType === 'product' && (
-                <div>
-                  <label className="block text-sm font-medium text-neutral-700 mb-2">
-                    Sélectionner l&apos;article
-                  </label>
-                  <select
-                    value={formData.productId}
-                    onChange={(e) => setFormData({ ...formData, productId: e.target.value })}
-                    className="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent-gold bg-white"
-                    required={formData.restrictionType === 'product'}
-                  >
-                    <option value="">-- Choisir un article --</option>
-                    {products.map((product) => (
-                      <option key={product.id} value={product.id}>
-                        {product.name}
-                        {product.color && product.color !== 'Main' ? ` - ${product.color}` : ''}
-                        {product.collection ? ` (${product.collection.name})` : ''}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              )}
-
-              {formData.restrictionType === 'collection' && (
-                <div>
-                  <label className="block text-sm font-medium text-neutral-700 mb-2">
-                    Sélectionner la collection
-                  </label>
-                  <select
-                    value={formData.collectionId}
-                    onChange={(e) => setFormData({ ...formData, collectionId: e.target.value })}
-                    className="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent-gold bg-white"
-                    required={formData.restrictionType === 'collection'}
-                  >
-                    <option value="">-- Choisir une collection --</option>
-                    {collections.map((collection) => (
-                      <option key={collection.id} value={collection.id}>
-                        {collection.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              )}
-            </div>
-
             <div className="flex items-center gap-6">
               <label className="flex items-center gap-2 cursor-pointer">
                 <input
@@ -534,6 +644,65 @@ export default function PromoCodesPage() {
                 />
                 <span className="text-sm text-neutral-700">Code actif</span>
               </label>
+            </div>
+
+            {/* ── Restriction Section ── */}
+            <div className="border border-neutral-200 rounded-xl p-5 space-y-4 bg-neutral-50">
+              <div>
+                <p className="text-sm font-semibold text-neutral-800 mb-3">Restriction d&apos;application</p>
+                <div className="flex flex-wrap gap-3">
+                  {[
+                    { value: 'all', label: 'Tous les produits', icon: <Ticket className="w-4 h-4" /> },
+                    { value: 'product', label: 'Articles spécifiques', icon: <Package className="w-4 h-4" /> },
+                    { value: 'collection', label: 'Collection spécifique', icon: <Layers className="w-4 h-4" /> },
+                  ].map(({ value, label, icon }) => (
+                    <button
+                      key={value}
+                      type="button"
+                      onClick={() => setFormData({
+                        ...formData,
+                        restrictionType: value as 'all' | 'product' | 'collection',
+                        productIds: value !== 'product' ? [] : formData.productIds,
+                        collectionId: value !== 'collection' ? '' : formData.collectionId,
+                      })}
+                      className={`flex items-center gap-2 px-4 py-2 rounded-lg border-2 text-sm font-medium transition-all ${
+                        formData.restrictionType === value
+                          ? 'border-accent-gold bg-accent-gold/10 text-neutral-900'
+                          : 'border-neutral-200 bg-white text-neutral-600 hover:border-neutral-300'
+                      }`}
+                    >
+                      {icon}
+                      {label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {formData.restrictionType === 'product' && (
+                <div>
+                  <p className="text-xs font-medium text-neutral-600 mb-2 uppercase tracking-wide">
+                    Sélectionner les articles concernés
+                  </p>
+                  <ProductPicker
+                    products={products}
+                    selectedIds={formData.productIds}
+                    onChange={(ids) => setFormData({ ...formData, productIds: ids })}
+                  />
+                </div>
+              )}
+
+              {formData.restrictionType === 'collection' && (
+                <div>
+                  <p className="text-xs font-medium text-neutral-600 mb-2 uppercase tracking-wide">
+                    Sélectionner la collection concernée
+                  </p>
+                  <CollectionPicker
+                    collections={collections}
+                    selectedId={formData.collectionId}
+                    onChange={(id) => setFormData({ ...formData, collectionId: id })}
+                  />
+                </div>
+              )}
             </div>
 
             <div className="flex gap-3 justify-end">
@@ -624,9 +793,10 @@ export default function PromoCodesPage() {
                           Min. {promoCode.minOrderAmount.toLocaleString('fr-FR')} FCFA
                         </p>
                       )}
-                      {promoCode.product && (
+                      {promoCode.productIds?.length > 0 && (
                         <p className="text-xs text-blue-600 mt-1 flex items-center gap-1">
-                          <Package className="w-3 h-3" /> {promoCode.product.name}
+                          <Package className="w-3 h-3" />
+                          {promoCode.productIds.length} article{promoCode.productIds.length > 1 ? 's' : ''}
                         </p>
                       )}
                       {promoCode.collection && (
